@@ -26,14 +26,10 @@ class ApiProvider {
 
       final body = _decodeResponse(response);
 
-      if (response.statusCode == 201 &&
-          body['message'] == 'User registered successfully') {
-        return body;
-      } else {
-        throw body['message'] ?? 'Pendaftaran gagal';
-      }
+      // Jangan langsung lempar error, biar controller yang handle berdasarkan isinya
+      return body;
     } catch (e) {
-      rethrow;
+      throw 'Terjadi kesalahan koneksi atau server';
     }
   }
 
@@ -52,7 +48,8 @@ class ApiProvider {
       if (response.statusCode == 200 && body['access_token'] != null) {
         await _storage.write(key: 'token', value: body['access_token']);
         if (body['data']?['username'] != null) {
-          await _storage.write(key: 'user_name', value: body['data']['username']);
+          await _storage.write(
+              key: 'user_name', value: body['data']['username']);
         }
         if (body['data']?['email'] != null) {
           await _storage.write(key: 'email', value: body['data']['email']);

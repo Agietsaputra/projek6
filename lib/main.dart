@@ -5,7 +5,7 @@ import 'package:apa/app/modules/login/bindings/login_binding.dart'; // <--- Tamb
 
 void main() {
   runApp(
-    GetMaterialApp(
+      GetMaterialApp(
       title: "Application",
       initialRoute: AppPages.INITIAL,
       getPages: AppPages.routes,
