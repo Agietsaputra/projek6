@@ -7,6 +7,7 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final HomeController controller = Get.find<HomeController>();
 
+    // Data dummy untuk list stretching
     final List<Map<String, String>> stretches = [
       {
         "title": "Joging",
@@ -46,6 +47,7 @@ class HomeView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Menampilkan email pengguna secara reactive
             Obx(() {
               return Text(
                 'Welcome, ${controller.email.value}!',
@@ -62,6 +64,7 @@ class HomeView extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 16),
+            // List stretching
             Expanded(
               child: ListView.builder(
                 itemCount: stretches.length,
@@ -106,23 +109,28 @@ class HomeView extends StatelessWidget {
           ],
         ),
       ),
+      // Bottom navigation bar
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
-          if (index == 0) {
-            Get.toNamed('/home', preventDuplicates: true);
-          } else if (index == 1) {
-            Get.toNamed('/deteksi', preventDuplicates: true);
-          } else if (index == 2) {
-            Get.toNamed('/history', preventDuplicates: true);
-          } else if (index == 3) {
-            Get.toNamed('/profile', preventDuplicates: true);
+          switch (index) {
+            case 0:
+              Get.toNamed('/home', preventDuplicates: true);
+              break;
+            case 1:
+              Get.toNamed('/deteksi', preventDuplicates: true);
+              break;
+            case 2:
+              Get.toNamed('/history', preventDuplicates: true);
+              break;
+            case 3:
+              Get.toNamed('/profile', preventDuplicates: true);
+              break;
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.camera_alt), label: 'Deteksi'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Deteksi'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],

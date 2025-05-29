@@ -78,14 +78,15 @@ class LoginView extends GetView<LoginController> {
                   const SizedBox(height: 24),
                   const Text("Or login with"),
                   const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(icon: const Icon(Icons.facebook, color: Colors.blue), onPressed: () {}),
-                      IconButton(icon: const Icon(Icons.g_mobiledata, color: Colors.red), onPressed: () {}),
-                      IconButton(icon: const Icon(Icons.apple, color: Colors.black), onPressed: () {}),
-                    ],
-                  ),
+                    Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.g_mobiledata, color: Colors.red, size: 40),
+                  onPressed: controller.signInWithGoogle,
+                ),
+              ],
+            ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => Get.toNamed('/register'),

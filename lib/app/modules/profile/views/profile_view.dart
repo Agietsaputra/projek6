@@ -32,17 +32,22 @@ class ProfileView extends GetView<ProfileController> {
     return Column(
       children: [
         const SizedBox(height: 20),
-        const CircleAvatar(
-          radius: 50,
-          backgroundImage: AssetImage('assets/images/profile.png'),
-        ),
+        Obx(() {
+          final photoUrl = controller.userPhoto.value;
+          return CircleAvatar(
+            radius: 50,
+            backgroundImage: photoUrl.isEmpty
+                ? const AssetImage('assets/images/profile.png') as ImageProvider
+                : NetworkImage(photoUrl),
+          );
+        }),
         const SizedBox(height: 10),
-        Text(
-          controller.userName.value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        Obx(() => Text(
+              controller.userName.value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            )),
         const SizedBox(height: 4),
-        Text(controller.userRole.value),
+        Obx(() => Text(controller.userEmail.value)),
         const SizedBox(height: 30),
         ListTile(
           leading: const Icon(Icons.edit),
@@ -159,7 +164,6 @@ class ProfileView extends GetView<ProfileController> {
             const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: () {
-                // Batalkan edit dan kembali ke tampilan profil
                 controller.isEditMode.value = false;
               },
               icon: const Icon(Icons.cancel),

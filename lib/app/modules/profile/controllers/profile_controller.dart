@@ -25,6 +25,7 @@ class ProfileController extends GetxController {
   var userPhone = ''.obs;
   var userUsername = ''.obs;
   var userGender = ''.obs;
+  var userPhoto = ''.obs; // Tambahan untuk foto profil
 
   // Untuk dropdown gender di form edit
   var gender = ''.obs;
@@ -62,6 +63,7 @@ class ProfileController extends GetxController {
       userUsername.value = profile['username'] ?? '';
       userRole.value = profile['role'] ?? '';
       userGender.value = profile['gender'] ?? '';
+      userPhoto.value = profile['photo'] ?? ''; // Ambil URL foto profil
 
       gender.value = userGender.value;
     } catch (e) {
