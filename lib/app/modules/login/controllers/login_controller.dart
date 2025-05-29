@@ -58,7 +58,8 @@ class LoginController extends GetxController {
 
         // Simpan token & user data ke FlutterSecureStorage
         await storage.write(key: 'token', value: token);
-        await storage.write(key: 'user_name', value: userData['username'] ?? '');
+        await storage.write(
+            key: 'user_name', value: userData['username'] ?? '');
         await storage.write(key: 'email', value: userData['email'] ?? '');
 
         Get.snackbar(
@@ -116,6 +117,7 @@ class LoginController extends GetxController {
 
       // Simpan data ke GetStorage
       final box = GetStorage();
+      box.write('photo', googleUser.photoUrl);
       box.write('userName', googleUser.displayName ?? '');
       box.write('userEmail', googleUser.email);
       box.write('userPassword', '*'); // placeholder

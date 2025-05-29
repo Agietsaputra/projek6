@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:apa/app/data/api_provider.dart';
 import 'package:apa/app/routes/app_pages.dart';
 
 class ProfileController extends GetxController {
   final ApiProvider api = Get.find();
-  final storage = const FlutterSecureStorage();
+  final box = GetStorage();
 
   // Controllers untuk form input
   final emailController = TextEditingController();
@@ -25,7 +25,7 @@ class ProfileController extends GetxController {
   var userPhone = ''.obs;
   var userUsername = ''.obs;
   var userGender = ''.obs;
-  var userPhoto = ''.obs; // Tambahan untuk foto profil
+  var userPhoto = ''.obs; // foto profil
 
   // Untuk dropdown gender di form edit
   var gender = ''.obs;
@@ -33,6 +33,7 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    loadUserDataFromStorage();
     fetchProfile();
   }
 
@@ -46,24 +47,45 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
+  void loadUserDataFromStorage() {
+    final storedName = box.read('userName') ?? '';
+    final storedPhoto = box.read('userPhoto') ?? '';
+    final storedEmail = box.read('userEmail') ?? '';
+
+    if (storedName.isNotEmpty) userName.value = storedName;
+    if (storedPhoto.isNotEmpty) userPhoto.value = storedPhoto;
+    if (storedEmail.isNotEmpty) userEmail.value = storedEmail;
+  }
+
   void fetchProfile() async {
     isLoading.value = true;
     try {
       final profile = await api.getProfile();
 
-      // Assign data ke controllers dan reactive vars
       emailController.text = profile['email'] ?? '';
       nameController.text = profile['name'] ?? '';
       phoneController.text = profile['phone'] ?? '';
       usernameController.text = profile['username'] ?? '';
 
-      userEmail.value = profile['email'] ?? '';
-      userName.value = profile['name'] ?? '';
-      userPhone.value = profile['phone'] ?? '';
-      userUsername.value = profile['username'] ?? '';
-      userRole.value = profile['role'] ?? '';
-      userGender.value = profile['gender'] ?? '';
-      userPhoto.value = profile['photo'] ?? ''; // Ambil URL foto profil
+      // Update reactive vars dari API jika ada, kalau tidak pakai yang dari storage
+      userEmail.value = profile['email'] ?? userEmail.value;
+      userName.value = profile['name'] ?? userName.value;
+      userPhone.value = profile['phone'] ?? userPhone.value;
+      userUsername.value = profile['username'] ?? userUsername.value;
+      userRole.value = profile['role'] ?? userRole.value;
+      userGender.value = profile['gender'] ?? userGender.value;
+
+      // Prioritaskan foto profil dari API, jika tidak ada gunakan foto dari storage (Google)
+      if (profile['photo'] != null && profile['photo'].toString().isNotEmpty) {
+        userPhoto.value = profile['photo'];
+        // Simpan juga ke storage biar update foto tersimpan
+        box.write('userPhoto', profile['photo']);
+      } else {
+        // Jika foto dari API tidak ada, gunakan foto yang sudah ada di storage
+        if (userPhoto.value.isNotEmpty) {
+          box.write('userPhoto', userPhoto.value);
+        }
+      }
 
       gender.value = userGender.value;
     } catch (e) {
@@ -99,7 +121,7 @@ class ProfileController extends GetxController {
       Get.snackbar(
           'Success', response['message'] ?? 'Profil berhasil diperbarui');
 
-      // Update reactive vars
+      // Update reactive vars kecuali userPhoto tetap pakai yang terakhir valid (biasanya dari API)
       userName.value = name;
       userEmail.value = emailController.text.trim();
       userPhone.value = phoneController.text.trim();
@@ -109,6 +131,7 @@ class ProfileController extends GetxController {
       isEditMode.value = false; // kembali ke mode view
       passwordController.clear();
 
+      // Refresh profile dari API lagi untuk mendapatkan data terbaru termasuk foto
       fetchProfile();
     } catch (e) {
       Get.snackbar('Error', 'Gagal memperbarui profil: $e');
@@ -121,7 +144,7 @@ class ProfileController extends GetxController {
     isLoading.value = true;
     try {
       final response = await api.deleteAccount();
-      await storage.deleteAll();
+      await box.erase();
       Get.snackbar('Success', response['message'] ?? 'Akun berhasil dihapus');
       Get.offAllNamed(Routes.LOGIN);
     } catch (e) {
@@ -135,7 +158,7 @@ class ProfileController extends GetxController {
     isLoading.value = true;
     try {
       await api.logout();
-      await storage.deleteAll();
+      await box.erase();
       Get.offAllNamed(Routes.LOGIN);
     } catch (e) {
       Get.snackbar('Error', 'Gagal logout: $e');
@@ -144,7 +167,6 @@ class ProfileController extends GetxController {
     }
   }
 
-  // Contoh validasi password (minimal 6 karakter & ada angka)
   bool validatePassword(String password) {
     final regex = RegExp(r'^(?=.*[0-9]).{6,}$');
     return regex.hasMatch(password);
