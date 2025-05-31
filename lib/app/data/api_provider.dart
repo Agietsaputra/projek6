@@ -10,28 +10,24 @@ class ApiProvider {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Register user baru
-  Future<Map<String, dynamic>> register(
-      String username, String email, String password) async {
-    final url = Uri.parse('$baseUrl/register');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      final body = _decodeResponse(response);
-
-      // Jangan langsung lempar error, biar controller yang handle berdasarkan isinya
+  Future<Map<String, dynamic>> register(String username, String email, String password) async {
+  final url = Uri.parse('$baseUrl/register');
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'email': email, 'password': password}),
+    );
+    final body = _decodeResponse(response);
+    if (response.statusCode == 200) {
       return body;
-    } catch (e) {
-      throw 'Terjadi kesalahan koneksi atau server';
+    } else {
+      throw body['message'] ?? 'Gagal registrasi';
     }
+  } catch (e) {
+    rethrow;
   }
+}
 
   // Login dengan email + password (endpoint /login)
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -124,6 +120,52 @@ class ApiProvider {
     }
   }
 
+  // ==== TAMBAHAN OTP ====
+
+  // Request OTP ke backend
+  Future<Map<String, dynamic>> requestOtp(String email) async {
+    final url = Uri.parse('$baseUrl/request-otp');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      final body = _decodeResponse(response);
+
+      if (response.statusCode == 200) {
+        return body;
+      } else {
+        throw body['message'] ?? 'Gagal mengirim OTP';
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Verifikasi OTP ke backend
+  Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
+    final url = Uri.parse('$baseUrl/verify-otp');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      );
+
+      final body = _decodeResponse(response);
+
+      if (response.statusCode == 200) {
+        return body;
+      } else {
+        throw body['message'] ?? 'Verifikasi OTP gagal';
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Ambil profil user
   Future<Map<String, dynamic>> getProfile() async {
     final token = await _storage.read(key: 'token');
@@ -150,7 +192,7 @@ class ApiProvider {
     }
   }
 
-  // Update profil
+  // Update profil user
   Future<Map<String, dynamic>> updateProfile({
     String? email,
     String? password,
@@ -208,7 +250,7 @@ class ApiProvider {
     }
   }
 
-  // Hapus akun
+  // Hapus akun user
   Future<Map<String, dynamic>> deleteAccount() async {
     final token = await _storage.read(key: 'token');
     if (token == null) throw 'Token tidak ditemukan';

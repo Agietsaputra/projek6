@@ -1,23 +1,25 @@
 import 'package:get/get.dart';
 
-import 'package:apa/app/modules/home/bindings/home_binding.dart';
-import 'package:apa/app/modules/home/views/home_view.dart';
+import '../modules/deteksi/bindings/deteksi_binding.dart';
+import '../modules/deteksi/views/deteksi_view.dart';
 
-import 'package:apa/app/modules/login/bindings/login_binding.dart';
-import 'package:apa/app/modules/login/views/login_view.dart';
+import '../modules/histori/bindings/histori_binding.dart';
+import '../modules/histori/views/histori_view.dart';
 
-import 'package:apa/app/modules/register/bindings/register_binding.dart';
-import 'package:apa/app/modules/register/views/register_view.dart';
+import '../modules/home/bindings/home_binding.dart';
+import '../modules/home/views/home_view.dart';
 
-import 'package:apa/app/modules/profile/bindings/profile_binding.dart';
-import 'package:apa/app/modules/profile/views/profile_view.dart';
+import '../modules/login/bindings/login_binding.dart';
+import '../modules/login/views/login_view.dart';
 
-import 'package:apa/app/modules/histori/bindings/histori_binding.dart';
-import 'package:apa/app/modules/histori/views/histori_view.dart';
+import '../modules/profile/bindings/profile_binding.dart';
+import '../modules/profile/views/profile_view.dart';
 
-import 'package:apa/app/modules/deteksi/bindings/deteksi_binding.dart';
-import 'package:apa/app/modules/deteksi/views/deteksi_view.dart';
-import 'package:apa/app/modules/deteksi/views/deteksi_view.dart';
+import '../modules/register/bindings/register_binding.dart';
+import '../modules/register/views/register_view.dart';
+
+import '../modules/verify/bindings/verify_binding.dart';
+import '../modules/verify/views/verify_view.dart';
 
 part 'app_routes.dart';
 
@@ -56,6 +58,11 @@ class AppPages {
       name: Routes.DETEKSI,
       page: () => DeteksiView(),
       binding: DeteksiBinding(),
+    ),
+    GetPage(
+      name: Routes.VERIFY,
+      page: () => VerifyView(),
+      binding: OtpVerifyBinding(),
     ),
   ];
 }

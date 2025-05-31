@@ -1,27 +1,32 @@
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:apa/app/data/api_provider.dart';
-import 'package:apa/app/routes/app_pages.dart';
 
 class RegisterController extends GetxController {
-  final nameController = TextEditingController();
+  final ApiProvider apiProvider = Get.find<ApiProvider>();
+
+  final usernameController = TextEditingController();
   final emailController = TextEditingController();
+  final otpController = TextEditingController();
   final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController(); // Tambahkan ini
+  final confirmPasswordController = TextEditingController();
 
-  final ApiProvider api = Get.find();
+  var isOtpRequested = false.obs;
 
-  void register() async {
-    final name = nameController.text.trim();
+  // Tahap 1: Kirim data registrasi dan OTP ke backend
+  Future<void> register() async {
+    final username = usernameController.text.trim();
     final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-    final confirmPassword = confirmPasswordController.text.trim();
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
 
-    if (name.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirmPassword.isEmpty) {
+    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       Get.snackbar('Error', 'Semua field wajib diisi');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      Get.snackbar('Error', 'Password dan konfirmasi tidak cocok');
       return;
     }
 
@@ -31,29 +36,46 @@ class RegisterController extends GetxController {
       return;
     }
 
-    if (password != confirmPassword) {
-      Get.snackbar('Error', 'Konfirmasi password tidak cocok');
+    if (password.length < 6) {
+      Get.snackbar('Error', 'Password minimal 6 karakter');
       return;
     }
 
     try {
-      final response = await api.register(name, email, password);
-
-      if (response.containsKey('user_id') ||
-          response['message']?.contains('successfully') == true) {
-        Get.snackbar('Success', 'Registrasi berhasil, silakan login');
-        Get.offNamed(Routes.LOGIN);
-      } else {
-        Get.snackbar('Error', response['message'] ?? 'Registrasi gagal');
-      }
+      final response = await apiProvider.register(username, email, password);
+      Get.snackbar('Sukses', 'OTP telah dikirim ke email');
+      isOtpRequested.value = true;
     } catch (e) {
-      final errMsg = e.toString();
-      if (errMsg.contains('User registered successfully')) {
-        Get.snackbar('Success', 'Registrasi berhasil, silakan login');
-        Get.offNamed(Routes.LOGIN);
-      } else {
-        Get.snackbar('Error', 'Registrasi gagal: $errMsg');
-      }
+      Get.snackbar('Error', e.toString());
     }
+  }
+
+  // Tahap 2: Verifikasi OTP
+  Future<void> verifyOtpAndFinish() async {
+    final email = emailController.text.trim();
+    final otp = otpController.text.trim();
+
+    if (email.isEmpty || otp.isEmpty) {
+      Get.snackbar('Error', 'Email dan OTP wajib diisi');
+      return;
+    }
+
+    try {
+      final result = await apiProvider.verifyOtp(email, otp);
+      Get.snackbar('Sukses', result['message'] ?? 'OTP terverifikasi');
+      Get.offAllNamed('/login'); // navigasi ke halaman login setelah sukses
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    }
+  }
+
+  @override
+  void onClose() {
+    usernameController.dispose();
+    emailController.dispose();
+    otpController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.onClose();
   }
 }
