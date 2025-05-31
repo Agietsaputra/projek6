@@ -49,20 +49,43 @@ class HomeView extends StatelessWidget {
           children: [
             // Menampilkan email pengguna secara reactive
             Obx(() {
-              return Text(
-                'Welcome, ${controller.email.value}!',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.teal,
-                ),
+              return Row(
+                children: [
+                  // Tampilkan foto jika tersedia
+                  if (controller.photoUrl.value.isNotEmpty)
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundImage: NetworkImage(controller.photoUrl.value),
+                    )
+                  else
+                    const CircleAvatar(
+                      radius: 30,
+                      child: Icon(Icons.person),
+                    ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome, ${controller.email.value}!',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                        const Text(
+                          "Selamat Datang Di Aplikasi Saya",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               );
             }),
-            const SizedBox(height: 12),
-            const Text(
-              "Selamat Datang Di Aplikasi Saya",
-              style: TextStyle(fontSize: 16),
-            ),
+
             const SizedBox(height: 16),
             // List stretching
             Expanded(
@@ -130,7 +153,8 @@ class HomeView extends StatelessWidget {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Deteksi'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.camera_alt), label: 'Deteksi'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
