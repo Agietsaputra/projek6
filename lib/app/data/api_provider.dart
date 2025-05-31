@@ -10,24 +10,28 @@ class ApiProvider {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Register user baru
-  Future<Map<String, dynamic>> register(String username, String email, String password) async {
-  final url = Uri.parse('$baseUrl/register');
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'email': email, 'password': password}),
-    );
-    final body = _decodeResponse(response);
-    if (response.statusCode == 200) {
+  Future<Map<String, dynamic>> register(
+      String username, String email, String password) async {
+    final url = Uri.parse('$baseUrl/register');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      final body = _decodeResponse(response);
+
+      // Jangan langsung lempar error, biar controller yang handle berdasarkan isinya
       return body;
-    } else {
-      throw body['message'] ?? 'Gagal registrasi';
+    } catch (e) {
+      throw 'Terjadi kesalahan koneksi atau server';
     }
-  } catch (e) {
-    rethrow;
   }
-}
 
   // Login dengan email + password (endpoint /login)
   Future<Map<String, dynamic>> login(String email, String password) async {

@@ -86,7 +86,22 @@ class ProfileView extends GetView<ProfileController> {
           child: Column(
             children: [
               ElevatedButton.icon(
-                onPressed: controller.logout,
+                onPressed: () {
+                  Get.defaultDialog(
+                    title: 'Konfirmasi',
+                    middleText: 'Apakah kamu yakin ingin keluar?',
+                    textConfirm: 'Ya',
+                    textCancel: 'Batal',
+                    confirmTextColor: Colors.white,
+                    onConfirm: () {
+                      Get.back(); // tutup dialog
+                      controller.logout(); // panggil fungsi logout
+                    },
+                    onCancel: () {
+                      // Bisa kosong atau lakukan sesuatu jika dibatalkan
+                    },
+                  );
+                },
                 icon: const Icon(Icons.logout),
                 label: const Text('Sign Out'),
                 style: ElevatedButton.styleFrom(
