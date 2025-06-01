@@ -48,43 +48,44 @@ class HomeView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Menampilkan email pengguna secara reactive
-            Obx(() {
-              return Row(
-                children: [
-                  // Tampilkan foto jika tersedia
-                  if (controller.photoUrl.value.isNotEmpty)
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundImage: NetworkImage(controller.photoUrl.value),
-                    )
-                  else
-                    const CircleAvatar(
-                      radius: 30,
-                      child: Icon(Icons.person),
-                    ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Welcome, ${controller.email.value}!',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.teal,
-                          ),
-                        ),
-                        const Text(
-                          "Selamat Datang Di Aplikasi Saya",
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
+
+            Row(
+              children: [
+                // Tampilkan foto jika tersedia
+                if (controller.photoUrl.value.isNotEmpty)
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: NetworkImage(controller.photoUrl.value),
+                  )
+                else
+                  const CircleAvatar(
+                    radius: 30,
+                    child: Icon(Icons.person),
                   ),
-                ],
-              );
-            }),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Obx(() => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome, ${controller.name.value.isNotEmpty ? controller.name.value : 'User'}!',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal,
+                            ),
+                          ),
+                          const Text(
+                            "Selamat Datang Di Aplikasi Saya",
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      )),
+                ),
+              ],
+            ),
 
             const SizedBox(height: 16),
             // List stretching
