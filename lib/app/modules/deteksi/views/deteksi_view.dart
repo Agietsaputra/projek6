@@ -1,95 +1,82 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:camera/camera.dart';
+
 import '../controllers/deteksi_controller.dart';
 
 class DeteksiView extends GetView<DeteksiController> {
-  const DeteksiView({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pose Detection (CNN)'),
-        centerTitle: true,
+        title: Text('Pose Detection'),
       ),
-      body: SafeArea(
-        child: Obx(() {
-          // Jika kamera belum diinisialisasi
-          if (!controller.isCameraInitialized.value) {
-            return Center(
-              child: ElevatedButton(
-                onPressed: controller.startCamera,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: const TextStyle(fontSize: 18),
-                ),
-                child: const Text('Start Camera'),
-              ),
-            );
-          }
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Text('Pilih Model:', style: TextStyle(fontSize: 18)),
+            Obx(() {
+              return DropdownButton<String>(
+                hint: Text('Pilih model'),
+                value: controller.activeModelFile.value == '' ? null : controller.activeModelFile.value,
+                items: controller.modelMap.entries
+                    .map(
+                      (e) => DropdownMenuItem<String>(
+                        value: e.key,
+                        child: Text(e.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) controller.activeModelFile(val);
+                },
+              );
+            }),
+            SizedBox(height: 16),
 
-          // Jika kamera sudah diinisialisasi
-          return Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    CameraPreview(controller.cameraController!),
-                    Positioned(
-                      bottom: 24,
-                      left: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Obx(() => Text(
-                              controller.predictedLabel.value != 'unknown'
-                                  ? 'Detected: ${controller.predictedLabel.value}'
-                                  : 'Detecting pose...',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            )),
-                      ),
-                    ),
-                  ],
+            Obx(() {
+              if (controller.activeModelFile.value == '') {
+                return Text('Silakan pilih model dulu');
+              }
+              return ElevatedButton(
+                onPressed: () {
+                  if (!controller.isCameraInitialized.value) {
+                    controller.startCamera();
+                  } else {
+                    controller.stopCamera();
+                  }
+                },
+                child: Text(
+                  controller.isCameraInitialized.value ? 'Stop Kamera' : 'Mulai Kamera',
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: controller.stopCamera,
-                      icon: const Icon(Icons.stop),
-                      label: const Text('Stop'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: controller.switchCamera,
-                      icon: const Icon(Icons.flip_camera_android),
-                      label: const Text('Switch'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }),
+              );
+            }),
+
+            SizedBox(height: 20),
+
+            Obx(() => Text(
+                  'Hasil prediksi: ${controller.predictedLabel.value}',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                )),
+
+            SizedBox(height: 20),
+
+            Obx(() {
+              if (!controller.isCameraInitialized.value) {
+                return Text('Kamera belum aktif');
+              }
+              if (controller.cameraController == null ||
+                  !controller.cameraController!.value.isInitialized) {
+                return Text('Loading kamera...');
+              }
+              return AspectRatio(
+                aspectRatio: controller.cameraController!.value.aspectRatio,
+                child: CameraPreview(controller.cameraController!),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
