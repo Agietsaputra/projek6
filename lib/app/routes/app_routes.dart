@@ -13,4 +13,5 @@ abstract class Routes {
   static const RESET_PASSWORD = '/reset-password';
   static const GERAKAN = '/gerakan';
   static const TUTORIAL = '/tutorial';
+  static const ACTIVITY = '/activity';
 }

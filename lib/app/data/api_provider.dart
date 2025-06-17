@@ -2,12 +2,17 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ApiProvider {
   final _storage = const FlutterSecureStorage();
   final String baseUrl = 'https://flask-smart.vercel.app';
 
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Future<String?> readSecureStorage(String key) async {
+    return await _storage.read(key: key);
+  }
 
   // Register user baru
   Future<Map<String, dynamic>> register(
@@ -91,13 +96,28 @@ class ApiProvider {
   // Login dengan Google
   Future<Map<String, dynamic>> loginWithGoogle() async {
     try {
-      final googleUser = await _googleSignIn.signIn();
+      // 1. Login dengan Google Sign-In
+      final GoogleSignInAccount? googleUser =
+          await GoogleSignIn(scopes: ['email', 'profile']).signIn();
       if (googleUser == null) throw 'Login Google dibatalkan';
 
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
-      if (idToken == null) throw 'Token Google tidak ditemukan';
+      // 2. Ambil auth credential
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
+      // 3. Login ke Firebase
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+
+      final idToken = await firebaseUser?.getIdToken();
+      if (idToken == null) throw 'Gagal mendapatkan ID Token Firebase';
+
+      // 4. Kirim token ke backend Flask
       final url = Uri.parse('$baseUrl/login/google');
       final response = await http.post(
         url,
@@ -108,16 +128,26 @@ class ApiProvider {
       final body = _decodeResponse(response);
 
       if (response.statusCode == 200 && body['token'] != null) {
+        // 5. Simpan token dari backend Flask
         await _storage.write(key: 'token', value: body['token']);
-        await _storage.write(
-          key: 'user_name',
-          value: googleUser.displayName ?? 'Google User',
-        );
+
+        // 6. Simpan data profil Google (dari Firebase user atau googleUser)
+        final name = firebaseUser?.displayName ??
+            googleUser.displayName ??
+            'Google User';
+        final email = firebaseUser?.email ?? googleUser.email;
+        final photo = firebaseUser?.photoURL ?? googleUser.photoUrl ?? '';
+
+        await _storage.write(key: 'user_name', value: name);
+        await _storage.write(key: 'email', value: email);
+        await _storage.write(key: 'picture', value: photo);
+
         return body;
       } else {
         throw body['message'] ?? 'Login Google gagal';
       }
     } catch (e) {
+      print("❌ Error loginWithGoogle: $e");
       rethrow;
     }
   }
@@ -190,48 +220,48 @@ class ApiProvider {
   }
 
 // Kirim OTP untuk reset password
-Future<Map<String, dynamic>> requestOtpReset(String email) async {
-  final url = Uri.parse('$baseUrl/request-otp-reset');
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
+  Future<Map<String, dynamic>> requestOtpReset(String email) async {
+    final url = Uri.parse('$baseUrl/request-otp-reset');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
 
-    final body = _decodeResponse(response);
+      final body = _decodeResponse(response);
 
-    if (response.statusCode == 200) {
-      return body;
-    } else {
-      throw body['message'] ?? 'Gagal mengirim OTP reset password';
+      if (response.statusCode == 200) {
+        return body;
+      } else {
+        throw body['message'] ?? 'Gagal mengirim OTP reset password';
+      }
+    } catch (e) {
+      rethrow;
     }
-  } catch (e) {
-    rethrow;
   }
-}
 
 // Verifikasi OTP reset password
-Future<Map<String, dynamic>> verifyOtpReset(String email, String otp) async {
-  final url = Uri.parse('$baseUrl/verify-otp-reset');
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'otp': otp}),
-    );
+  Future<Map<String, dynamic>> verifyOtpReset(String email, String otp) async {
+    final url = Uri.parse('$baseUrl/verify-otp-reset');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      );
 
-    final body = _decodeResponse(response);
+      final body = _decodeResponse(response);
 
-    if (response.statusCode == 200) {
-      return body;
-    } else {
-      throw body['message'] ?? 'Verifikasi OTP reset password gagal';
+      if (response.statusCode == 200) {
+        return body;
+      } else {
+        throw body['message'] ?? 'Verifikasi OTP reset password gagal';
+      }
+    } catch (e) {
+      rethrow;
     }
-  } catch (e) {
-    rethrow;
   }
-}
 
   // Get profil user
   Future<Map<String, dynamic>> getProfile() async {

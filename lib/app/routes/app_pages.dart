@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/activity/bindings/activity_binding.dart';
+import '../modules/activity/views/activity_view.dart';
 import '../modules/deteksi/bindings/deteksi_binding.dart';
 import '../modules/deteksi/views/deteksi_view.dart';
 import '../modules/forgot_password/bindings/forgot_password_binding.dart';
@@ -92,6 +94,11 @@ class AppPages {
       name: Routes.TUTORIAL,
       page: () => const TutorialView(),
       binding: TutorialBinding(),
+    ),
+    GetPage(
+      name: Routes.ACTIVITY,
+      page: () => const ActivityView(),
+      binding: ActivityBinding(),
     ),
   ];
 }

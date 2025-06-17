@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
 import 'package:apa/app/routes/app_pages.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileView extends GetView<ProfileController> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -34,11 +35,16 @@ class ProfileView extends GetView<ProfileController> {
         const SizedBox(height: 20),
         Obx(() {
           final photoUrl = controller.userPhoto.value;
+
           return CircleAvatar(
-            radius: 50,
-            backgroundImage: photoUrl.isEmpty
-                ? const AssetImage('assets/images/profile.png') as ImageProvider
-                : NetworkImage(photoUrl),
+            radius: 30,
+            backgroundImage: controller.userPhoto.value.isNotEmpty
+                ? NetworkImage(controller.userPhoto.value)
+                : const AssetImage('assets/images/profile.png')
+                    as ImageProvider,
+            child: controller.userPhoto.value.isNotEmpty
+                ? null
+                : const Icon(Icons.person, size: 30),
           );
         }),
         const SizedBox(height: 10),
@@ -60,6 +66,14 @@ class ProfileView extends GetView<ProfileController> {
             controller.usernameController.text = controller.userUsername.value;
             controller.gender.value = controller.userGender.value;
             controller.isEditMode.value = true;
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.history),
+          title: const Text('Aktivitas Saya'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Get.toNamed(Routes.ACTIVITY);
           },
         ),
         ListTile(
@@ -94,11 +108,8 @@ class ProfileView extends GetView<ProfileController> {
                     textCancel: 'Batal',
                     confirmTextColor: Colors.white,
                     onConfirm: () {
-                      Get.back(); // tutup dialog
-                      controller.logout(); // panggil fungsi logout
-                    },
-                    onCancel: () {
-                      // Bisa kosong atau lakukan sesuatu jika dibatalkan
+                      Get.back();
+                      controller.logout();
                     },
                   );
                 },

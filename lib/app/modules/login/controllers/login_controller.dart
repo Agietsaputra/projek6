@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:apa/app/modules/activity/controllers/activity_controller.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
@@ -7,6 +11,7 @@ import 'package:apa/app/routes/app_pages.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginController extends GetxController {
   final identifierController = TextEditingController(); // Email atau Username
@@ -64,7 +69,8 @@ class LoginController extends GetxController {
 
         // Simpan token & user data ke FlutterSecureStorage
         await storage.write(key: 'token', value: token);
-        await storage.write(key: 'user_name', value: userData['username'] ?? '');
+        await storage.write(
+            key: 'user_name', value: userData['username'] ?? '');
         await storage.write(key: 'email', value: userData['email'] ?? '');
 
         Get.snackbar(
@@ -99,6 +105,16 @@ class LoginController extends GetxController {
     }
   }
 
+  Future<String> getDeviceName() async {
+    final deviceInfo = DeviceInfoPlugin();
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfo.androidInfo;
+      return '${androidInfo.manufacturer} ${androidInfo.model}';
+    } else {
+      return 'Unknown Device';
+    }
+  }
+
   /// Login dengan Google Sign-In
   Future<void> signInWithGoogle() async {
     try {
@@ -127,7 +143,28 @@ class LoginController extends GetxController {
       box.write('userEmail', googleUser.email);
       box.write('userPassword', '*'); // placeholder
       box.write('authType', 'google');
+      final username = googleUser.displayName ?? 'User';
+      final emailValue = googleUser.email;
+      final img = googleUser.photoUrl ?? '';
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('username', username);
+      await prefs.setString('email', emailValue);
+      await prefs.setString('img', img);
+
+      final activityController = Get.put(ActivityController());
+      final deviceName = await getDeviceName();
+      activityController.addHistory(LoginHistory(
+          email: emailValue,
+          provider: 'google',
+          loginTime: DateTime.now(),
+          device: deviceName));
+      final keys = prefs.getKeys();
+      final prefsMap = <String, dynamic>{};
+      for (String key in keys) {
+        prefsMap[key] = prefs.get(key);
+      }
+      print('🎯 SharedPreferences: $prefsMap');
       Get.snackbar("Sukses", "Login Google berhasil");
       Get.offAllNamed(Routes.HOME);
     } catch (e) {

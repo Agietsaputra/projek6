@@ -48,14 +48,27 @@ class ProfileController extends GetxController {
   }
 
   void loadUserDataFromStorage() {
-    final storedName = box.read('userName') ?? '';
-    final storedPhoto = box.read('userPhoto') ?? '';
-    final storedEmail = box.read('userEmail') ?? '';
+  final storedName = box.read('userName') ?? '';
+  final storedPhoto = box.read('userPhoto') ?? '';
+  final storedEmail = box.read('userEmail') ?? '';
 
-    if (storedName.isNotEmpty) userName.value = storedName;
-    if (storedPhoto.isNotEmpty) userPhoto.value = storedPhoto;
-    if (storedEmail.isNotEmpty) userEmail.value = storedEmail;
+  // Tambahan: baca dari secure storage kalau foto kosong
+  if (storedName.isNotEmpty) userName.value = storedName;
+  if (storedEmail.isNotEmpty) userEmail.value = storedEmail;
+
+  if (storedPhoto.isNotEmpty) {
+    userPhoto.value = storedPhoto;
+  } else {
+    // Coba baca dari secure storage (jika login Google)
+    api.readSecureStorage('picture').then((picUrl) {
+      if (picUrl != null && picUrl.isNotEmpty) {
+        userPhoto.value = picUrl;
+        box.write('userPhoto', picUrl); // simpan agar cepat diakses
+      }
+    });
   }
+}
+
 
   void fetchProfile() async {
     isLoading.value = true;
