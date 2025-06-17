@@ -103,7 +103,7 @@ class ProfileController extends GetxController {
       }
 
       gender.value = userGender.value;
-    } catch (e) {
+    } catch (s) {
       Get.snackbar('Sukses', 'oh wa klalen!');
     } finally {
       isLoading.value = false;

@@ -42,69 +42,111 @@ class LoginController extends GetxController {
     });
   }
 
+  void logActivity(String message) {
+  final box = GetStorage();
+  final now = DateTime.now().toIso8601String();
+  final List<dynamic> activityList = box.read('activity') ?? [];
+
+  activityList.add({
+    'message': message,
+    'timestamp': now,
+  });
+
+  box.write('activity', activityList);
+}
+
   /// Login via API biasa
   Future<void> login() async {
-    final emailOrUsername = identifierController.text.trim();
-    final password = passwordController.text.trim();
+  final emailOrUsername = identifierController.text.trim();
+  final password = passwordController.text.trim();
 
-    if (emailOrUsername.isEmpty || password.isEmpty) {
-      Get.snackbar(
-        'Input Tidak Lengkap',
-        'Email/Username dan password wajib diisi',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-      return;
-    }
-
-    isLoading.value = true;
-
-    try {
-      final response = await api.login(emailOrUsername, password);
-
-      if (response.containsKey('access_token')) {
-        final token = response['access_token'];
-        final userData = response['data'] ?? {};
-
-        // Simpan token & user data ke FlutterSecureStorage
-        await storage.write(key: 'token', value: token);
-        await storage.write(
-            key: 'user_name', value: userData['username'] ?? '');
-        await storage.write(key: 'email', value: userData['email'] ?? '');
-
-        Get.snackbar(
-          'Login Berhasil',
-          'Selamat datang, ${userData['username'] ?? 'pengguna'}!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-          duration: const Duration(seconds: 3),
-        );
-
-        Get.offAllNamed(Routes.HOME);
-      } else {
-        Get.snackbar(
-          'Login Gagal',
-          response['message'] ?? 'Email atau password salah',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Terjadi Kesalahan',
-        'Gagal login. Coba lagi. Error: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    } finally {
-      isLoading.value = false;
-    }
+  if (emailOrUsername.isEmpty || password.isEmpty) {
+    Get.snackbar(
+      'Input Tidak Lengkap',
+      'Email/Username dan password wajib diisi',
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+    );
+    return;
   }
 
+  isLoading.value = true;
+
+  try {
+    final response = await api.login(emailOrUsername, password);
+
+    if (response.containsKey('access_token')) {
+      final token = response['access_token'];
+      final userData = response['data'] ?? {};
+
+      // ✅ Gantikan blok ini:
+      if (token != null && userData is Map) {
+  final username = userData['username'] ?? '';
+  final email = userData['email'] ?? '';
+  final name = userData['name'] ?? '';
+  final photo = userData['photo'] ?? '';
+
+  // Simpan ke storage
+  await storage.write(key: 'token', value: token);
+  await storage.write(key: 'user_name', value: username);
+  await storage.write(key: 'email', value: email);
+
+  final box = GetStorage();
+  box.write('userName', name);
+  box.write('userEmail', email);
+  box.write('userUsername', username);
+  box.write('userPhoto', photo);
+
+  // ✅ Simpan juga ke SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('email', email);
+
+  // ✅ Simpan aktivitas login
+  final activityController = Get.find<ActivityController>();
+  final deviceName = await getDeviceName();
+
+  activityController.addHistory(LoginHistory(
+    email: email,
+    provider: 'manual',
+    loginTime: DateTime.now(),
+    device: deviceName,
+  ));
+
+  Get.snackbar(
+    'Login Berhasil',
+    'Selamat datang, ${username.isNotEmpty ? username : 'pengguna'}!',
+    backgroundColor: Colors.green,
+    colorText: Colors.white,
+    snackPosition: SnackPosition.TOP,
+    duration: const Duration(seconds: 2),
+  );
+
+  Get.offAllNamed(Routes.HOME);
+}
+
+
+    } else {
+      Get.snackbar(
+        'Login Gagal',
+        response['message'] ?? 'Email atau password salah',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    }
+  } catch (e) {
+    Get.snackbar(
+      'Terjadi Kesalahan',
+      'Gagal login. Coba lagi. Error: $e',
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+    );
+  } finally {
+    isLoading.value = false;
+  }
+}
   Future<String> getDeviceName() async {
     final deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {

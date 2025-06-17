@@ -7,6 +7,7 @@ class LoginBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<ApiProvider>(() => ApiProvider());
     Get.lazyPut<LoginController>(
+
       () => LoginController(),
     );
   }
