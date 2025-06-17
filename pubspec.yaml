@@ -47,6 +47,7 @@ dependencies:
   firebase_core: ^2.28.0
   shared_preferences: ^2.5.3
   image_picker: ^1.0.4
+  video_player: ^2.7.0
 
 dev_dependencies:
   flutter_test:
@@ -73,11 +74,26 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
      - assets/labels/label.txt
-     - assets/models/pose_cnn_model.tflite
+     - assets/models/Walking_Lunge_model.tflite
+     - assets/models/Standing_Hip_Circle_model.tflite
+     - assets/models/Frankenstein_walk_model.tflite
+     - assets/models/Calf_Raises_model.tflite
+     - assets/models/Butt_kick_model.tflite
      - assets/images/foto1.jpg
      - assets/images/foto2.jpg
      - assets/images/foto3.jpg
      - assets/images/foto4.jpg
+     - assets/images/logo2.png
+     - assets/images/logo3.png
+     - assets/images/butt_kick.png
+     - assets/images/calf_raises.png
+     - assets/images/frankenstein_walk.png
+     - assets/images/standing_hip_circle.png
+     - assets/images/walking_lunge.png
+     - assets/videos/butt_kick.mp4
+     - assets/videos/calf_raises.mp4
+     - assets/models/Walking_Lunge_model.tflite
+     
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

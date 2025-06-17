@@ -1,6 +1,6 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:camera/camera.dart';
 import '../controllers/deteksi_controller.dart';
 
 class DeteksiView extends GetView<DeteksiController> {
@@ -9,84 +9,100 @@ class DeteksiView extends GetView<DeteksiController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
-        title: const Text('Pose Detection (CNN)'),
+        backgroundColor: const Color(0xFF1A1A3F),
+        title: const Text(
+          'Deteksi Gerakan',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF72DEC2),
+          ),
+        ),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF72DEC2)),
       ),
       body: SafeArea(
         child: Obx(() {
-          // Jika kamera belum diinisialisasi
           if (!controller.isCameraInitialized.value) {
-            return Center(
-              child: ElevatedButton(
-                onPressed: controller.startCamera,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: const TextStyle(fontSize: 18),
-                ),
-                child: const Text('Start Camera'),
-              ),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
-          // Jika kamera sudah diinisialisasi
           return Column(
             children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    CameraPreview(controller.cameraController!),
-                    Positioned(
-                      bottom: 24,
-                      left: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Obx(() => Text(
-                              controller.predictedLabel.value != 'unknown'
-                                  ? 'Detected: ${controller.predictedLabel.value}'
-                                  : 'Detecting pose...',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            )),
-                      ),
-                    ),
-                  ],
-                ),
+              // 🔲 Kamera dalam rasio portrait (3:4)
+              AspectRatio(
+                aspectRatio: 3 / 4,
+                child: CameraPreview(controller.cameraController!),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: controller.stopCamera,
-                      icon: const Icon(Icons.stop),
-                      label: const Text('Stop'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: controller.switchCamera,
-                      icon: const Icon(Icons.flip_camera_android),
-                      label: const Text('Switch'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 20),
+
+              // 🧠 Prediksi Gerakan
+              Text(
+                'Gerakan Terdeteksi:',
+                style: TextStyle(fontSize: 18, color: Colors.grey[800]),
               ),
+              const SizedBox(height: 10),
+              Obx(() => Text(
+                    controller.predictedLabel.value.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  )),
+
+              const Spacer(),
+
+              // 🔘 Tombol Aksi
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: controller.switchCamera,
+                    icon: const Icon(Icons.cameraswitch),
+                    label: const Text('Ubah Kamera'),
+                  ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () {
+                      final label = controller.predictedLabel.value;
+                      final target =
+                          controller.modelMap[controller.activeModelFile.value];
+                      if (label == target) {
+                        Get.back(result: true);
+                      } else {
+                        Get.snackbar(
+                          'Deteksi Gagal',
+                          'Pastikan kamu melakukan gerakan $target dengan benar.',
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check),
+                    label: const Text('Selesai'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
             ],
           );
         }),

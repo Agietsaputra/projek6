@@ -1,114 +1,128 @@
-import 'dart:math';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class DeteksiController extends GetxController {
-  late Interpreter interpreter;
-  List<String> labels = [];
-
+  Map<String, Interpreter> interpreters = {};
   CameraController? cameraController;
   List<CameraDescription> cameras = [];
   int selectedCameraIndex = 0;
 
-  final isCameraInitialized = false.obs;
-  final predictedLabel = 'unknown'.obs;
+  var isCameraInitialized = false.obs;
+  var predictedLabel = 'unknown'.obs;
+  bool isDetecting = false;
 
-  final PoseDetector poseDetector = PoseDetector(
+  var activeModelFile = ''.obs;
+
+  final poseDetector = PoseDetector(
     options: PoseDetectorOptions(mode: PoseDetectionMode.stream),
   );
 
-  bool isDetecting = false;
+  final modelMap = {
+    'Walking_Lunge_model.tflite': 'Walking Lunge',
+    'Standing_Hip_Circle_model.tflite': 'Standing Hip Circle',
+    'Frankenstein_walk_model.tflite': 'Frankenstein Walk',
+    'Calf_Raises_model.tflite': 'Calf Raises',
+    'Butt_kick_model.tflite': 'Butt Kick',
+  };
+
+  String getModelFileByExercise(String exerciseName) {
+    final lower = exerciseName.toLowerCase().replaceAll(' ', '_');
+    return modelMap.keys.firstWhere(
+      (file) => file.toLowerCase().contains(lower),
+      orElse: () => '',
+    );
+  }
 
   @override
   void onInit() {
     super.onInit();
-    loadModel();
+    loadAllModels().then((_) async {
+      final exerciseName = Get.arguments as String? ?? '';
+      final modelFile = getModelFileByExercise(exerciseName);
+      if (modelFile.isNotEmpty) {
+        activeModelFile.value = modelFile;
+        await startCamera();
+      } else {
+        debugPrint('⚠️ Model tidak ditemukan untuk: $exerciseName');
+      }
+    });
   }
 
   @override
   void onClose() {
     stopCamera();
-    interpreter.close();
+    for (var interpreter in interpreters.values) {
+      interpreter.close();
+    }
     poseDetector.close();
     super.onClose();
   }
 
-  /// Load CNN model dan label dari asset
-  Future<void> loadModel() async {
-    try {
-      interpreter = await Interpreter.fromAsset('assets/models/pose_cnn_model.tflite');
-
-      final labelData = await rootBundle.loadString('assets/labels/label.txt');
-      labels = labelData.split('\n').where((e) => e.trim().isNotEmpty).toList();
-
-      debugPrint('✅ CNN Model dan label berhasil dimuat (${labels.length})');
-    } catch (e) {
-      debugPrint('❌ Gagal memuat model CNN: $e');
+  Future<void> loadAllModels() async {
+    for (var modelFile in modelMap.keys) {
+      try {
+        final interpreter =
+            await Interpreter.fromAsset('assets/models/$modelFile'); // ✅ Tanpa 'assets/'
+        interpreters[modelFile] = interpreter;
+        debugPrint('✅ Loaded: $modelFile');
+      } catch (e) {
+        debugPrint('❌ Failed to load $modelFile: $e');
+      }
     }
   }
 
   Future<void> startCamera() async {
-    try {
-      cameras = await availableCameras();
-      await initializeCamera(selectedCameraIndex);
-    } catch (e) {
-      debugPrint('❌ Tidak dapat mengakses kamera: $e');
-    }
+    if (activeModelFile.value == '') return;
+    cameras = await availableCameras();
+    await initializeCamera(selectedCameraIndex);
   }
 
   Future<void> stopCamera() async {
-    try {
-      await cameraController?.stopImageStream();
-      await cameraController?.dispose();
-    } catch (_) {}
+    await cameraController?.stopImageStream();
+    await cameraController?.dispose();
     cameraController = null;
     isCameraInitialized.value = false;
     predictedLabel.value = 'unknown';
   }
 
   Future<void> switchCamera() async {
-    if (cameras.isEmpty) {
-      cameras = await availableCameras();
-    }
+    if (cameras.isEmpty) cameras = await availableCameras();
     selectedCameraIndex = (selectedCameraIndex + 1) % cameras.length;
     await stopCamera();
     await initializeCamera(selectedCameraIndex);
   }
 
-  Future<void> initializeCamera(int index) async {
+  Future<void> initializeCamera(int cameraIndex) async {
     try {
-      final camera = cameras[index];
+      final selectedCamera = cameras[cameraIndex];
       cameraController = CameraController(
-        camera,
+        selectedCamera,
         ResolutionPreset.medium,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.nv21,
       );
-
       await cameraController!.initialize();
       await cameraController!.startImageStream(processCameraImage);
       isCameraInitialized.value = true;
     } catch (e) {
-      debugPrint('❌ Error inisialisasi kamera: $e');
+      debugPrint('❌ Camera error: $e');
     }
   }
 
-  /// Proses frame kamera untuk deteksi pose dan prediksi CNN
   void processCameraImage(CameraImage image) async {
-    if (isDetecting) return;
+    if (isDetecting || interpreters.isEmpty) return;
     isDetecting = true;
 
     try {
-      final WriteBuffer allBytes = WriteBuffer();
-      for (final Plane plane in image.planes) {
-        allBytes.putUint8List(plane.bytes);
+      List<int> allBytes = [];
+      for (final plane in image.planes) {
+        allBytes.addAll(plane.bytes);
       }
-
-      final bytes = allBytes.done().buffer.asUint8List();
+      final bytes = Uint8List.fromList(allBytes);
 
       final rotation = InputImageRotationValue.fromRawValue(
             cameraController!.description.sensorOrientation,
@@ -117,7 +131,7 @@ class DeteksiController extends GetxController {
 
       final format = InputImageFormatValue.fromRawValue(image.format.raw);
       if (format == null) {
-        debugPrint("❌ Format tidak didukung: ${image.format.raw}");
+        isDetecting = false;
         return;
       }
 
@@ -133,44 +147,48 @@ class DeteksiController extends GetxController {
 
       final poses = await poseDetector.processImage(inputImage);
       if (poses.isNotEmpty) {
-        final List<double> keypoints = [];
-
-        for (var type in PoseLandmarkType.values) {
-          final landmark = poses.first.landmarks[type];
-          keypoints.addAll(landmark != null ? [landmark.x, landmark.y] : [0.0, 0.0]);
+        final keypoints = <double>[];
+        for (var lmType in PoseLandmarkType.values) {
+          final lm = poses.first.landmarks[lmType];
+          keypoints.addAll(lm != null ? [lm.x, lm.y, lm.z] : [0.0, 0.0, 0.0]);
         }
 
-        // Untuk CNN input shape (11, 6, 1) → reshape ke [1, 11, 6, 1]
-        if (keypoints.length == 66) {
-          final reshaped = List.generate(11, (i) {
-            return List.generate(6, (j) {
-              final idx = i * 6 + j;
-              return idx < keypoints.length ? keypoints[idx] : 0.0;
-            });
-          });
+        // Pastikan jumlah keypoint sesuai input model
+        if (keypoints.length == 99) {
+          final interpreter = interpreters[activeModelFile.value];
+          if (interpreter == null) {
+            isDetecting = false;
+            return;
+          }
 
-          final input = [reshaped.map((row) => row.map((e) => [e]).toList()).toList()]; // [1,11,6,1]
+          final inputShape = interpreter.getInputTensor(0).shape;
+          dynamic input;
 
-          final outputTensor = interpreter.getOutputTensor(0);
-          final output = List.generate(
-            1,
-            (_) => List.filled(outputTensor.shape[1], 0.0),
-          );
+          if (inputShape.length == 2) {
+            input = [keypoints];
+          } else {
+            debugPrint('❌ Unsupported input shape: $inputShape');
+            isDetecting = false;
+            return;
+          }
 
+          final output = List.generate(1, (_) => List.filled(1, 0.0));
           interpreter.run(input, output);
 
-          final predictions = output[0];
-          final maxIndex =
-              predictions.indexWhere((e) => e == predictions.reduce(max));
-
-          if (maxIndex >= 0 && maxIndex < labels.length) {
-            predictedLabel.value = labels[maxIndex];
-            debugPrint("✅ Prediksi CNN: ${predictedLabel.value}");
+          final confidence = output[0][0];
+          if (confidence > 0.8) {
+            predictedLabel.value = modelMap[activeModelFile.value]!;
+            debugPrint('🎯 Predicted: ${predictedLabel.value} ($confidence)');
+          } else {
+            predictedLabel.value = 'unknown';
+            debugPrint('❓ Low confidence: $confidence');
           }
+        } else {
+          debugPrint('⚠️ Jumlah keypoints tidak sesuai: ${keypoints.length}');
         }
       }
     } catch (e) {
-      debugPrint("❌ Pose detection error: $e");
+      debugPrint('❌ Detection error: $e');
     } finally {
       isDetecting = false;
     }

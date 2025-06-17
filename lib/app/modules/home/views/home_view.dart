@@ -142,7 +142,7 @@ class HomeView extends StatelessWidget {
               Get.toNamed('/home', preventDuplicates: true);
               break;
             case 1:
-              Get.toNamed('/deteksi', preventDuplicates: true);
+              Get.toNamed('/gerakan', preventDuplicates: true);
               break;
             case 2:
               Get.toNamed('/history', preventDuplicates: true);

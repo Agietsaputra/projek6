@@ -10,6 +10,7 @@ android {
     compileSdk = 35         // ganti dengan sesuai kebutuhan proyek Flutter kamu
     ndkVersion = "27.0.12077973"
     
+    
     defaultConfig {
         applicationId = "com.example.apa"
         minSdk = 23          // atau 21 / 24 tergantung kebutuhan

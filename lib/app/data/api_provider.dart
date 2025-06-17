@@ -25,15 +25,13 @@ class ApiProvider {
       );
 
       final body = _decodeResponse(response);
-
-      // Jangan langsung lempar error, biar controller yang handle berdasarkan isinya
       return body;
     } catch (e) {
       throw 'Terjadi kesalahan koneksi atau server';
     }
   }
 
-  // Login dengan email + password (endpoint /login)
+  // Login dengan email + password
   Future<Map<String, dynamic>> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/login');
     try {
@@ -63,7 +61,7 @@ class ApiProvider {
     }
   }
 
-  // Login Basic Auth (endpoint /login/basic)
+  // Login Basic Auth
   Future<Map<String, dynamic>> loginWithBasicAuth(
       String identifier, String password) async {
     final url = Uri.parse('$baseUrl/login/basic');
@@ -90,7 +88,7 @@ class ApiProvider {
     }
   }
 
-  // Login dengan akun Google
+  // Login dengan Google
   Future<Map<String, dynamic>> loginWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();
@@ -124,9 +122,7 @@ class ApiProvider {
     }
   }
 
-  // ==== TAMBAHAN OTP ====
-
-  // Request OTP ke backend
+  // Request OTP
   Future<Map<String, dynamic>> requestOtp(String email) async {
     final url = Uri.parse('$baseUrl/request-otp');
     try {
@@ -148,7 +144,7 @@ class ApiProvider {
     }
   }
 
-  // Verifikasi OTP ke backend
+  // Verifikasi OTP
   Future<Map<String, dynamic>> verifyOtp(String email, String otp) async {
     final url = Uri.parse('$baseUrl/verify-otp');
     try {
@@ -170,7 +166,74 @@ class ApiProvider {
     }
   }
 
-  // Ambil profil user
+  // Reset password
+  Future<Map<String, dynamic>> resetPassword(
+      String email, String newPassword) async {
+    final url = Uri.parse('$baseUrl/reset-password');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'new_password': newPassword}),
+      );
+
+      final body = _decodeResponse(response);
+
+      if (response.statusCode == 200) {
+        return body;
+      } else {
+        throw body['message'] ?? 'Reset password gagal';
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+// Kirim OTP untuk reset password
+Future<Map<String, dynamic>> requestOtpReset(String email) async {
+  final url = Uri.parse('$baseUrl/request-otp-reset');
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email}),
+    );
+
+    final body = _decodeResponse(response);
+
+    if (response.statusCode == 200) {
+      return body;
+    } else {
+      throw body['message'] ?? 'Gagal mengirim OTP reset password';
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
+// Verifikasi OTP reset password
+Future<Map<String, dynamic>> verifyOtpReset(String email, String otp) async {
+  final url = Uri.parse('$baseUrl/verify-otp-reset');
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'otp': otp}),
+    );
+
+    final body = _decodeResponse(response);
+
+    if (response.statusCode == 200) {
+      return body;
+    } else {
+      throw body['message'] ?? 'Verifikasi OTP reset password gagal';
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
+  // Get profil user
   Future<Map<String, dynamic>> getProfile() async {
     final token = await _storage.read(key: 'token');
     if (token == null) throw 'Token tidak ditemukan';
@@ -254,7 +317,7 @@ class ApiProvider {
     }
   }
 
-  // Hapus akun user
+  // Hapus akun
   Future<Map<String, dynamic>> deleteAccount() async {
     final token = await _storage.read(key: 'token');
     if (token == null) throw 'Token tidak ditemukan';
@@ -274,21 +337,15 @@ class ApiProvider {
     }
   }
 
-  // Logout & hapus token lokal
+  // Logout
   Future<void> clearToken() async {
-    await _storage.delete(key: 'token');
-    await _storage.delete(key: 'user_name');
-    await _storage.delete(key: 'email');
-    await _storage.delete(key: 'phone');
-    await _storage.delete(key: 'username');
-    await _storage.delete(key: 'gender');
+    await _storage.deleteAll();
   }
 
   Future<void> logout() async {
     await clearToken();
   }
 
-  // Mendapatkan token yang tersimpan
   Future<String?> getToken() async {
     return await _storage.read(key: 'token');
   }
@@ -317,7 +374,7 @@ class ApiProvider {
     }
   }
 
-  // Helper decode response json, dengan error handling
+  // Helper
   Map<String, dynamic> _decodeResponse(http.Response response) {
     try {
       return jsonDecode(response.body) as Map<String, dynamic>;

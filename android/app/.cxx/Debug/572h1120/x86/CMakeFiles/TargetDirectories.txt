@@ -1,0 +1,2 @@
+E:/IKHSAN IBNU/Semester 6/Capstone/projek6/android/app/.cxx/Debug/572h1120/x86/CMakeFiles/edit_cache.dir
+E:/IKHSAN IBNU/Semester 6/Capstone/projek6/android/app/.cxx/Debug/572h1120/x86/CMakeFiles/rebuild_cache.dir

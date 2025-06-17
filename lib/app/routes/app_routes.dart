@@ -7,5 +7,10 @@ abstract class Routes {
   static const PROFILE = '/profile';
   static const HISTORY = '/history';
   static const DETEKSI = '/deteksi';
-  static const VERIFY = '/verify'; // route untuk halaman verifikasi OTP
+  static const VERIFY = '/verify';
+  static const FORGOT_PASSWORD = '/forgot-password';
+  static const VERIFY_RESET_OTP = '/verify-reset-otp';
+  static const RESET_PASSWORD = '/reset-password';
+  static const GERAKAN = '/gerakan';
+  static const TUTORIAL = '/tutorial';
 }

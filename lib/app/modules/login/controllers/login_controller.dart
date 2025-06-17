@@ -16,6 +16,12 @@ class LoginController extends GetxController {
 
   final isLoading = false.obs;
 
+  /// 🔐 Untuk toggle visibility password
+  final isPasswordHidden = true.obs;
+  void togglePasswordVisibility() {
+    isPasswordHidden.value = !isPasswordHidden.value;
+  }
+
   // Firebase Auth & Google Sign-In
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
@@ -58,8 +64,7 @@ class LoginController extends GetxController {
 
         // Simpan token & user data ke FlutterSecureStorage
         await storage.write(key: 'token', value: token);
-        await storage.write(
-            key: 'user_name', value: userData['username'] ?? '');
+        await storage.write(key: 'user_name', value: userData['username'] ?? '');
         await storage.write(key: 'email', value: userData['email'] ?? '');
 
         Get.snackbar(
