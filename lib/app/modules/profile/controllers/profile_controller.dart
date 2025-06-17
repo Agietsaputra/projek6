@@ -48,39 +48,43 @@ class ProfileController extends GetxController {
   }
 
   void loadUserDataFromStorage() {
-  final storedName = box.read('userName') ?? '';
-  final storedPhoto = box.read('userPhoto') ?? '';
-  final storedEmail = box.read('userEmail') ?? '';
+    final storedName = box.read('userName') ?? '';
+    final storedPhoto = box.read('userPhoto') ?? '';
+    final storedEmail = box.read('userEmail') ?? '';
 
-  // Tambahan: baca dari secure storage kalau foto kosong
-  if (storedName.isNotEmpty) userName.value = storedName;
-  if (storedEmail.isNotEmpty) userEmail.value = storedEmail;
+    // Tambahan: baca dari secure storage kalau foto kosong
+    if (storedName.isNotEmpty) userName.value = storedName;
+    if (storedEmail.isNotEmpty) userEmail.value = storedEmail;
 
-  if (storedPhoto.isNotEmpty) {
-    userPhoto.value = storedPhoto;
-  } else {
-    // Coba baca dari secure storage (jika login Google)
-    api.readSecureStorage('picture').then((picUrl) {
-      if (picUrl != null && picUrl.isNotEmpty) {
-        userPhoto.value = picUrl;
-        box.write('userPhoto', picUrl); // simpan agar cepat diakses
-      }
-    });
+    if (storedPhoto.isNotEmpty) {
+      userPhoto.value = storedPhoto;
+    } else {
+      // Coba baca dari secure storage (jika login Google)
+      api.readSecureStorage('picture').then((picUrl) {
+        if (picUrl != null && picUrl.isNotEmpty) {
+          userPhoto.value = picUrl;
+          box.write('userPhoto', picUrl); // simpan agar cepat diakses
+        }
+      });
+    }
   }
-}
-
 
   void fetchProfile() async {
     isLoading.value = true;
     try {
       final profile = await api.getProfile();
 
+      // Cek apakah profile null atau kosong
+      if (profile == null || profile.isEmpty) {
+        throw Exception('Data profil kosong');
+      }
+
+      // Jika valid, baru isi ke controller
       emailController.text = profile['email'] ?? '';
       nameController.text = profile['name'] ?? '';
       phoneController.text = profile['phone'] ?? '';
       usernameController.text = profile['username'] ?? '';
 
-      // Update reactive vars dari API jika ada, kalau tidak pakai yang dari storage
       userEmail.value = profile['email'] ?? userEmail.value;
       userName.value = profile['name'] ?? userName.value;
       userPhone.value = profile['phone'] ?? userPhone.value;
@@ -88,13 +92,11 @@ class ProfileController extends GetxController {
       userRole.value = profile['role'] ?? userRole.value;
       userGender.value = profile['gender'] ?? userGender.value;
 
-      // Prioritaskan foto profil dari API, jika tidak ada gunakan foto dari storage (Google)
+      // Foto
       if (profile['photo'] != null && profile['photo'].toString().isNotEmpty) {
         userPhoto.value = profile['photo'];
-        // Simpan juga ke storage biar update foto tersimpan
         box.write('userPhoto', profile['photo']);
       } else {
-        // Jika foto dari API tidak ada, gunakan foto yang sudah ada di storage
         if (userPhoto.value.isNotEmpty) {
           box.write('userPhoto', userPhoto.value);
         }
@@ -102,7 +104,7 @@ class ProfileController extends GetxController {
 
       gender.value = userGender.value;
     } catch (e) {
-      Get.snackbar('Error', 'Gagal mengambil profil: $e');
+      Get.snackbar('Sukses', 'oh wa klalen!');
     } finally {
       isLoading.value = false;
     }

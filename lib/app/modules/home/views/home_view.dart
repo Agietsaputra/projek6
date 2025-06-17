@@ -52,16 +52,16 @@ class HomeView extends StatelessWidget {
             Row(
               children: [
                 // Tampilkan foto jika tersedia
-                if (controller.photoUrl.value.isNotEmpty)
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundImage: NetworkImage(controller.photoUrl.value),
-                  )
-                else
-                  const CircleAvatar(
-                    radius: 30,
-                    child: Icon(Icons.person),
-                  ),
+                Obx(() {
+                  final photo = controller.photoUrl.value;
+                  return CircleAvatar(
+                    radius: 40,
+                    backgroundImage: photo.isNotEmpty
+                        ? NetworkImage(photo)
+                        : const AssetImage('assets/images/profile.png')
+                            as ImageProvider,
+                  );
+                }),
 
                 const SizedBox(width: 12),
 

@@ -15,13 +15,14 @@ class ProfileView extends GetView<ProfileController> {
             Text(controller.isEditMode.value ? 'Edit Profile' : 'Profile')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Get.offNamed(Routes.HOME);
-          },
+          onPressed: () => Get.offNamed(Routes.HOME),
         ),
         centerTitle: true,
       ),
       body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
         return controller.isEditMode.value
             ? _buildEditForm(context)
             : _buildProfileView(context);
@@ -34,19 +35,17 @@ class ProfileView extends GetView<ProfileController> {
       children: [
         const SizedBox(height: 20),
         Obx(() {
-          final photoUrl = controller.userPhoto.value;
+  final photoUrl = controller.userPhoto.value;
 
-          return CircleAvatar(
-            radius: 30,
-            backgroundImage: controller.userPhoto.value.isNotEmpty
-                ? NetworkImage(controller.userPhoto.value)
-                : const AssetImage('assets/images/profile.png')
-                    as ImageProvider,
-            child: controller.userPhoto.value.isNotEmpty
-                ? null
-                : const Icon(Icons.person, size: 30),
-          );
-        }),
+  return CircleAvatar(
+    radius: 40,
+    backgroundColor: Colors.grey.shade300,
+    backgroundImage: photoUrl.isNotEmpty
+        ? NetworkImage(photoUrl)
+        : const AssetImage('assets/images/profile.png') as ImageProvider,
+  );
+}),
+
         const SizedBox(height: 10),
         Obx(() => Text(
               controller.userName.value,

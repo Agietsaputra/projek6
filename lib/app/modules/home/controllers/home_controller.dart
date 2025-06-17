@@ -5,59 +5,58 @@ import 'package:apa/app/data/api_provider.dart';
 
 class HomeController extends GetxController {
   final ApiProvider _apiProvider = Get.find();
+  final box = GetStorage();
+
   var email = ''.obs;
-  var photoUrl = ''.obs;
   var name = ''.obs;
+  var photoUrl = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadUserEmail();
+    _loadUserData();
   }
 
-  void _loadUserEmail() async {
+  void _loadUserData() async {
     try {
+      // Coba ambil dari API (jika login manual)
       final profile = await _apiProvider.getProfile();
-      if (profile != null) {
-        if (profile['email'] != null &&
-            profile['email'].toString().isNotEmpty) {
-          email.value = profile['email'];
-        }
-        if (profile['name'] != null && profile['name'].toString().isNotEmpty) {
-          name.value = profile['name'];
-        }
+      if (profile.isNotEmpty) {
+        email.value = profile['email'] ?? '';
+        name.value = profile['name'] ?? '';
         photoUrl.value = profile['photo'] ?? '';
+
+        // Simpan ke storage untuk fallback
+        box.write('userEmail', email.value);
+        box.write('name', name.value);
+        box.write('photo', photoUrl.value);
         return;
       }
+    } catch (e) {
+      print('⚠️ Gagal ambil dari API: $e');
+    }
 
+    try {
+      // Coba ambil dari Firebase (jika login Google)
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         email.value = user.email ?? '';
         name.value = user.displayName ?? '';
         photoUrl.value = user.photoURL ?? '';
+
+        // Simpan ke storage juga
+        box.write('userEmail', email.value);
+        box.write('name', name.value);
+        box.write('photo', photoUrl.value);
         return;
       }
-
-      final box = GetStorage();
-      final storedEmail = box.read('userEmail');
-      final storedName = box.read('name');
-      final storedPhoto = box.read('photo');
-
-      if (storedEmail != null) {
-        email.value = storedEmail;
-      }
-      if (storedName != null) {
-        name.value = storedName;
-      }
-      if (storedPhoto != null) {
-        photoUrl.value = storedPhoto;
-      }
     } catch (e) {
-      print('Error mengambil profil: $e');
-      final box = GetStorage();
-      email.value = box.read('userEmail') ?? 'Gagal memuat email';
-      name.value = box.read('name') ?? 'User';
-      photoUrl.value = box.read('photo') ?? '';
+      print('⚠️ Gagal ambil dari Firebase: $e');
     }
+
+    // Terakhir fallback dari local storage
+    email.value = box.read('userEmail') ?? 'Tidak ada email';
+    name.value = box.read('name') ?? 'Pengguna';
+    photoUrl.value = box.read('photo') ?? '';
   }
 }

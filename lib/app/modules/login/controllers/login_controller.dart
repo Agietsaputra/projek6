@@ -138,7 +138,7 @@ class LoginController extends GetxController {
 
       // Simpan data ke GetStorage
       final box = GetStorage();
-      box.write('photo', googleUser.photoUrl);
+      box.write('userPhoto', googleUser.photoUrl);
       box.write('userName', googleUser.displayName ?? '');
       box.write('userEmail', googleUser.email);
       box.write('userPassword', '*'); // placeholder
@@ -148,6 +148,7 @@ class LoginController extends GetxController {
       final img = googleUser.photoUrl ?? '';
 
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('photo', googleUser.photoUrl ?? '');
       await prefs.setString('username', username);
       await prefs.setString('email', emailValue);
       await prefs.setString('img', img);
