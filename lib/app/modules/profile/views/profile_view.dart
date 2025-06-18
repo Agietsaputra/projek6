@@ -93,6 +93,14 @@ class ProfileView extends GetView<ProfileController> {
             );
           },
         ),
+        ListTile(
+          leading: const Icon(Icons.visibility_rounded),
+          title: const Text('Visualisasi'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Get.toNamed(Routes.VISUALISASI);
+          },
+        ),
         const Spacer(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),

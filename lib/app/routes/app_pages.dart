@@ -26,6 +26,8 @@ import '../modules/verify/bindings/verify_binding.dart';
 import '../modules/verify/views/verify_view.dart';
 import '../modules/verify_otp_reset/bindings/verify_otp_reset_binding.dart';
 import '../modules/verify_otp_reset/views/verify_otp_reset_view.dart';
+import '../modules/visualisasi/bindings/visualisasi_binding.dart';
+import '../modules/visualisasi/views/visualisasi_view.dart';
 
 part 'app_routes.dart';
 
@@ -99,6 +101,11 @@ class AppPages {
       name: Routes.ACTIVITY,
       page: () => const ActivityView(),
       binding: ActivityBinding(),
+    ),
+    GetPage(
+      name: Routes.VISUALISASI,
+      page: () => const VisualisasiView(),
+      binding: VisualisasiBinding(),
     ),
   ];
 }
