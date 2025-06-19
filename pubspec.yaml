@@ -95,6 +95,9 @@ flutter:
      - assets/images/walking_lunge.png
      - assets/videos/butt_kick.mp4
      - assets/videos/calf_raises.mp4
+     - assets/videos/frankenstein_walk.mp4
+     - assets/videos/standing_hip_circle.mp4
+     - assets/videos/walking_lunge.mp4
      - assets/models/Walking_Lunge_model.tflite
      
 

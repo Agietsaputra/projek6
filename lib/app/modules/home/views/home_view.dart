@@ -7,7 +7,6 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final HomeController controller = Get.find<HomeController>();
 
-    // Data dummy untuk list stretching
     final List<Map<String, String>> stretches = [
       {
         "title": "Joging",
@@ -16,19 +15,19 @@ class HomeView extends StatelessWidget {
             "Joging adalah latihan kardio ringan yang bermanfaat untuk kesehatan jantung dan meningkatkan stamina."
       },
       {
-        "title": "p balap",
+        "title": "P Balap",
         "image": "assets/images/foto3.jpg",
         "description":
             "P balap adalah bentuk lari cepat yang memacu kekuatan otot dan refleks secara maksimal."
       },
       {
-        "title": "p balap",
+        "title": "P Balap",
         "image": "assets/images/foto2.jpg",
         "description":
             "Latihan ini menekankan kecepatan dan efisiensi gerak tubuh selama berlari."
       },
       {
-        "title": "p balap",
+        "title": "P Balap",
         "image": "assets/images/foto4.jpg",
         "description":
             "Baik dilakukan dalam latihan interval untuk meningkatkan daya tahan tubuh."
@@ -39,7 +38,10 @@ class HomeView extends StatelessWidget {
       backgroundColor: Colors.teal[50],
       appBar: AppBar(
         backgroundColor: Colors.teal,
-        title: const Text("Stretching", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Stretching",
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -47,11 +49,8 @@ class HomeView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Menampilkan email pengguna secara reactive
-
             Row(
               children: [
-                // Tampilkan foto jika tersedia
                 Obx(() {
                   final photo = controller.photoUrl.value;
                   return CircleAvatar(
@@ -62,9 +61,7 @@ class HomeView extends StatelessWidget {
                             as ImageProvider,
                   );
                 }),
-
                 const SizedBox(width: 12),
-
                 Expanded(
                   child: Obx(() => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,9 +83,7 @@ class HomeView extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-            // List stretching
             Expanded(
               child: ListView.builder(
                 itemCount: stretches.length,
@@ -133,7 +128,6 @@ class HomeView extends StatelessWidget {
           ],
         ),
       ),
-      // Bottom navigation bar
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         onTap: (index) {
@@ -148,15 +142,18 @@ class HomeView extends StatelessWidget {
               Get.toNamed('/history', preventDuplicates: true);
               break;
             case 3:
+              Get.toNamed('/visualisasi', preventDuplicates: true);
+              break;
+            case 4:
               Get.toNamed('/profile', preventDuplicates: true);
               break;
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.camera_alt), label: 'Deteksi'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Deteksi'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Visualisasi'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         selectedItemColor: Colors.blue,

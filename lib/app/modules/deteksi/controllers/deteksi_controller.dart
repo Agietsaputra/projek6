@@ -66,7 +66,7 @@ class DeteksiController extends GetxController {
     for (var modelFile in modelMap.keys) {
       try {
         final interpreter =
-            await Interpreter.fromAsset('assets/models/$modelFile'); // ✅ Tanpa 'assets/'
+            await Interpreter.fromAsset('assets/models/$modelFile'); 
         interpreters[modelFile] = interpreter;
         debugPrint('✅ Loaded: $modelFile');
       } catch (e) {

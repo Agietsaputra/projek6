@@ -35,17 +35,15 @@ class ProfileView extends GetView<ProfileController> {
       children: [
         const SizedBox(height: 20),
         Obx(() {
-  final photoUrl = controller.userPhoto.value;
-
-  return CircleAvatar(
-    radius: 40,
-    backgroundColor: Colors.grey.shade300,
-    backgroundImage: photoUrl.isNotEmpty
-        ? NetworkImage(photoUrl)
-        : const AssetImage('assets/images/profile.png') as ImageProvider,
-  );
-}),
-
+          final photoUrl = controller.userPhoto.value;
+          return CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.grey.shade300,
+            backgroundImage: photoUrl.isNotEmpty
+                ? NetworkImage(photoUrl)
+                : const AssetImage('assets/images/profile.png') as ImageProvider,
+          );
+        }),
         const SizedBox(height: 10),
         Obx(() => Text(
               controller.userName.value,
@@ -91,14 +89,6 @@ class ProfileView extends GetView<ProfileController> {
                 controller.deleteAccount();
               },
             );
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.visibility_rounded),
-          title: const Text('Visualisasi'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            Get.toNamed(Routes.VISUALISASI);
           },
         ),
         const Spacer(),
