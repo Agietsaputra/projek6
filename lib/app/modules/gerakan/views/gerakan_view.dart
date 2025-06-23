@@ -13,7 +13,7 @@ class GerakanView extends GetView<GerakanController> {
         backgroundColor: const Color(0xFF1A1A3F),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF72DEC2)),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.offAllNamed('/home'),
         ),
         title: const Text(
           'Gerakan Pemanasan',
@@ -112,15 +112,11 @@ class GerakanView extends GetView<GerakanController> {
                     ),
                   ),
                   onPressed: () {
-                    Get.snackbar(
-                      "Berhasil",
-                      "Riwayat berhasil disimpan!",
-                      backgroundColor: Colors.green.shade600,
-                      colorText: Colors.white,
-                    );
+                    // Ganti snackbar dengan navigasi ke halaman mulai lari
+                    Get.toNamed('/mulai-lari');
                   },
                   child: const Text(
-                    "Simpan ke Riwayat",
+                    "Mulai Lari",
                     style: TextStyle(
                       fontSize: 18,
                       color: Color(0xFF72DEC2),

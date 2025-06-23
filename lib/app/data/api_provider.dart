@@ -262,6 +262,57 @@ class ApiProvider {
       rethrow;
     }
   }
+// Simpan riwayat lari per user (durasi dalam detik, jarak dalam kilometer)
+Future<void> simpanRiwayatLari({
+  required int durasi,
+  required double jarak,
+}) async {
+  final token = await _storage.read(key: 'token');
+  if (token == null) throw 'Token tidak ditemukan';
+
+  final url = Uri.parse('$baseUrl/riwayat-lari');
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode({
+      'durasi': durasi,
+      'jarak': jarak,
+    }),
+  );
+
+  final body = _decodeResponse(response);
+
+  if (response.statusCode != 200) {
+    throw body['message'] ?? 'Gagal menyimpan riwayat lari';
+  }
+}
+
+// Ambil riwayat lari user dari backend
+Future<List<Map<String, dynamic>>> getRiwayatLari() async {
+  final token = await _storage.read(key: 'token');
+  if (token == null) throw 'Token tidak ditemukan';
+
+  final url = Uri.parse('$baseUrl/riwayat-lari');
+  final response = await http.get(
+    url,
+    headers: {
+      'Authorization': 'Bearer $token',
+    },
+  );
+
+  final body = _decodeResponse(response);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = body['riwayat_lari'] ?? [];
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  } else {
+    throw body['message'] ?? 'Gagal mengambil riwayat lari';
+  }
+}
+
 
   // Get profil user
   Future<Map<String, dynamic>> getProfile() async {

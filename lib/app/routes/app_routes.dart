@@ -15,4 +15,6 @@ abstract class Routes {
   static const TUTORIAL = '/tutorial';
   static const ACTIVITY = '/activity';
   static const VISUALISASI = '/visualisasi';
+  static const MULAI_LARI = '/mulai-lari';
+  static const RINGKASAN_LARI = '/ringkasan-lari';
 }

@@ -14,12 +14,16 @@ import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
+import '../modules/mulai_lari/bindings/mulai_lari_binding.dart';
+import '../modules/mulai_lari/views/mulai_lari_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
 import '../modules/reset_password/bindings/reset_password_binding.dart';
 import '../modules/reset_password/views/reset_password_view.dart';
+import '../modules/ringkasan_lari/bindings/ringkasan_lari_binding.dart';
+import '../modules/ringkasan_lari/views/ringkasan_lari_view.dart';
 import '../modules/tutorial/bindings/tutorial_binding.dart';
 import '../modules/tutorial/views/tutorial_view.dart';
 import '../modules/verify/bindings/verify_binding.dart';
@@ -59,7 +63,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.HISTORY,
-      page: () => HistoryView(),
+      page: () => HistoriView(),
       binding: HistoriBinding(),
     ),
     GetPage(
@@ -106,6 +110,16 @@ class AppPages {
       name: Routes.VISUALISASI,
       page: () => const VisualisasiView(),
       binding: VisualisasiBinding(),
+    ),
+    GetPage(
+      name: Routes.MULAI_LARI,
+      page: () => const MulaiLariView(),
+      binding: MulaiLariBinding(),
+    ),
+    GetPage(
+      name: Routes.RINGKASAN_LARI,
+      page: () => const RingkasanLariView(),
+      binding: RingkasanLariBinding(),
     ),
   ];
 }

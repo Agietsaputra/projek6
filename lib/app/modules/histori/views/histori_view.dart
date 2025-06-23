@@ -1,79 +1,169 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:apa/app/modules/home/controllers/home_controller.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../controllers/histori_controller.dart';
 
-class HistoryView extends StatelessWidget {
+class HistoriView extends GetView<HistoriController> {
+  const HistoriView({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final HomeController controller = Get.find<HomeController>();
-
     return Scaffold(
-      backgroundColor: Colors.teal[50],
+      backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF1A1A3F),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF72DEC2)),
+          onPressed: () => Get.offAllNamed('/home'),
+        ),
         title: const Text(
-          "History",
-          style: TextStyle(color: Colors.white),
+          "Riwayat Lari",
+          style: TextStyle(color: Color(0xFF72DEC2), fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF72DEC2)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.builder(
-          itemCount: 10, // Contoh 10 riwayat
-          itemBuilder: (context, index) {
-            return Card(
-              elevation: 4,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ListTile(
-                title: Text(
-                  "Warm-up Session $index",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF1A1A3F)));
+        }
+
+        if (controller.riwayatLari.isEmpty) {
+          return const Center(
+            child: Text(
+              "Belum ada riwayat lari.",
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "📈 Grafik Jarak Lari (km)",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A3F),
                 ),
-                subtitle: const Text("Duration: 10 minutes"),
-                trailing: const Icon(Icons.arrow_forward),
-                onTap: () {
-                  Get.snackbar("History", "Detail riwayat sesi $index");
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: AspectRatio(
+                  aspectRatio: 1.6,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: true),
+                      borderData: FlBorderData(show: false),
+                      titlesData: FlTitlesData(
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, _) {
+                              final index = value.toInt();
+                              if (index >= 0 && index < controller.riwayatLari.length) {
+                                final tanggal = controller.riwayatLari[index]['tanggal'] ?? '';
+                                return Text(
+                                  tanggal.split('-').last,
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF1A1A3F)),
+                                );
+                              }
+                              return const Text('');
+                            },
+                            interval: 1,
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, _) => Text(
+                              value.toStringAsFixed(0),
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                            reservedSize: 30,
+                          ),
+                        ),
+                        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: controller.riwayatLari
+                              .asMap()
+                              .entries
+                              .map((e) => FlSpot(
+                                    e.key.toDouble(),
+                                    (e.value['jarak'] ?? 0).toDouble(),
+                                  ))
+                              .toList(),
+                          isCurved: true,
+                          color: const Color(0xFF72DEC2),
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: true, color: Color(0xFF72DEC2).withOpacity(0.2)),
+                          dotData: FlDotData(show: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "📋 Daftar Riwayat",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A3F),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ListView.builder(
+                itemCount: controller.riwayatLari.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final item = controller.riwayatLari[index];
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.directions_run, color: Color(0xFF1A1A3F)),
+                      title: Text(
+                        "Durasi: ${item['durasi']} detik",
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                      subtitle: Text(
+                        "Jarak: ${item['jarak']} km",
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      trailing: Text(
+                        item['tanggal'] ?? '',
+                        style: const TextStyle(color: Color(0xFF1A1A3F), fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  );
                 },
               ),
-            );
-          },
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // Menandakan halaman ini adalah History
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Get.toNamed('/home', preventDuplicates: true);
-              break;
-            case 1:
-              Get.toNamed('/gerakan', preventDuplicates: true);
-              break;
-            case 2:
-              Get.toNamed('/history', preventDuplicates: true);
-              break;
-            case 3:
-              Get.toNamed('/visualisasi', preventDuplicates: true);
-              break;
-            case 4:
-              Get.toNamed('/profile', preventDuplicates: true);
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Deteksi'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Visualisasi'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-      ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

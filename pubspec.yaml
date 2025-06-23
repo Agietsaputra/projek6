@@ -51,6 +51,11 @@ dependencies:
   intl: ^0.20.2
   device_info_plus: ^10.1.2
   syncfusion_flutter_charts: ^29.1.38
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  geolocator: ^11.0.0
+  fl_chart: ^0.66.0
+
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +93,7 @@ flutter:
      - assets/images/foto4.jpg
      - assets/images/logo2.png
      - assets/images/logo3.png
+     - assets/images/aset.png
      - assets/images/butt_kick.png
      - assets/images/calf_raises.png
      - assets/images/frankenstein_walk.png
@@ -98,7 +104,6 @@ flutter:
      - assets/videos/frankenstein_walk.mp4
      - assets/videos/standing_hip_circle.mp4
      - assets/videos/walking_lunge.mp4
-     - assets/models/Walking_Lunge_model.tflite
      
 
   # An image asset can refer to one or more resolution-specific "variants", see

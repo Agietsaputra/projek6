@@ -1,23 +1,27 @@
 import 'package:get/get.dart';
+import 'package:apa/app/data/api_provider.dart';
 
 class HistoriController extends GetxController {
-  //TODO: Implement HistoriController
+  final apiProvider = ApiProvider();
 
-  final count = 0.obs;
+  var isLoading = true.obs;
+  var riwayatLari = <Map<String, dynamic>>[].obs;
+
   @override
   void onInit() {
     super.onInit();
+    fetchRiwayatLari();
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  Future<void> fetchRiwayatLari() async {
+    try {
+      isLoading.value = true;
+      final data = await apiProvider.getRiwayatLari();
+      riwayatLari.value = data;
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }
