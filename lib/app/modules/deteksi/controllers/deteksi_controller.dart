@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:apa/app/modules/gerakan/controllers/gerakan_controller.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,15 +6,15 @@ import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class DeteksiController extends GetxController {
-  final Map<String, Interpreter> interpreters = {};
+  Map<String, Interpreter> interpreters = {};
   CameraController? cameraController;
   List<CameraDescription> cameras = [];
   int selectedCameraIndex = 0;
 
   var isCameraInitialized = false.obs;
   var predictedLabel = 'unknown'.obs;
-  bool isDetecting = false;
   var activeModelFile = ''.obs;
+  bool isDetecting = false;
 
   final poseDetector = PoseDetector(
     options: PoseDetectorOptions(mode: PoseDetectionMode.stream),
@@ -29,27 +28,22 @@ class DeteksiController extends GetxController {
     'Butt_kick_model.tflite': 'Butt Kick',
   };
 
-  String getModelFileByExercise(String exerciseName) {
-    final lower = exerciseName.toLowerCase().replaceAll(' ', '_');
-    return modelMap.keys.firstWhere(
-      (file) => file.toLowerCase().contains(lower),
-      orElse: () => '',
-    );
-  }
-
   @override
   void onInit() {
     super.onInit();
     loadAllModels().then((_) async {
       final exerciseName = Get.arguments as String? ?? '';
-      final modelFile = getModelFileByExercise(exerciseName);
-      debugPrint('📁 Argument exercise: $exerciseName');
-      debugPrint('📁 Model file selected: $modelFile');
-      if (modelFile.isNotEmpty) {
-        activeModelFile.value = modelFile;
-        await startCamera();
-      } else {
-        debugPrint('⚠️ Model tidak ditemukan untuk: $exerciseName');
+      for (final entry in modelMap.entries) {
+        final normalizedName = entry.value.toLowerCase().replaceAll(' ', '');
+        final inputName = exerciseName.toLowerCase().replaceAll(' ', '');
+        if (normalizedName == inputName) {
+          activeModelFile.value = entry.key;
+          await startCamera();
+          break;
+        }
+      }
+      if (activeModelFile.value.isEmpty) {
+        debugPrint("❌ Tidak ditemukan model untuk '$exerciseName'");
       }
     });
   }
@@ -67,18 +61,20 @@ class DeteksiController extends GetxController {
   Future<void> loadAllModels() async {
     for (var modelFile in modelMap.keys) {
       try {
-        final interpreter =
-            await Interpreter.fromAsset('assets/models/$modelFile');
+        final interpreter = await Interpreter.fromAsset('assets/models/$modelFile');
         interpreters[modelFile] = interpreter;
         debugPrint('✅ Loaded model: $modelFile');
       } catch (e) {
-        debugPrint('❌ Failed to load $modelFile: $e');
+        debugPrint('❌ Failed to load model $modelFile: $e');
       }
     }
   }
 
   Future<void> startCamera() async {
-    if (activeModelFile.value == '') return;
+    if (activeModelFile.value == '') {
+      debugPrint('❗ Pilih model dulu sebelum mulai kamera');
+      return;
+    }
     cameras = await availableCameras();
     await initializeCamera(selectedCameraIndex);
   }
@@ -92,7 +88,9 @@ class DeteksiController extends GetxController {
   }
 
   Future<void> switchCamera() async {
-    if (cameras.isEmpty) cameras = await availableCameras();
+    if (cameras.isEmpty) {
+      cameras = await availableCameras();
+    }
     selectedCameraIndex = (selectedCameraIndex + 1) % cameras.length;
     await stopCamera();
     await initializeCamera(selectedCameraIndex);
@@ -105,96 +103,99 @@ class DeteksiController extends GetxController {
         selectedCamera,
         ResolutionPreset.medium,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.yuv420, // fallback
+        imageFormatGroup: ImageFormatGroup.nv21,
       );
       await cameraController!.initialize();
       await cameraController!.startImageStream(processCameraImage);
       isCameraInitialized.value = true;
-      debugPrint('📷 Camera initialized and streaming...');
     } catch (e) {
-      debugPrint('❌ Camera error: $e');
+      debugPrint('Camera init error: $e');
     }
   }
 
   void processCameraImage(CameraImage image) async {
-    if (isDetecting || cameraController == null || interpreters.isEmpty) return;
+    if (isDetecting || activeModelFile.value.isEmpty) return;
     isDetecting = true;
 
     try {
-      final format = InputImageFormatValue.fromRawValue(image.format.raw);
+      final allBytes = image.planes.fold<List<int>>([], (acc, plane) {
+        acc.addAll(plane.bytes);
+        return acc;
+      });
+      final bytes = Uint8List.fromList(allBytes);
+
       final rotation = InputImageRotationValue.fromRawValue(
             cameraController!.description.sensorOrientation,
           ) ??
           InputImageRotation.rotation0deg;
 
+      final format = InputImageFormatValue.fromRawValue(image.format.raw);
       if (format == null) {
-        debugPrint('❌ Unsupported image format');
+        debugPrint("Unsupported format: ${image.format.raw}");
         isDetecting = false;
         return;
       }
 
-      final allBytes = image.planes.expand((plane) => plane.bytes).toList();
       final inputImage = InputImage.fromBytes(
-        bytes: Uint8List.fromList(allBytes),
+        bytes: bytes,
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
           rotation: rotation,
           format: format,
-          bytesPerRow: image.planes.first.bytesPerRow,
+          bytesPerRow: image.planes[0].bytesPerRow,
         ),
       );
 
       final poses = await poseDetector.processImage(inputImage);
-      debugPrint('🧍‍♀️ Detected poses: ${poses.length}');
-
       if (poses.isNotEmpty) {
         final keypoints = <double>[];
-        for (var type in PoseLandmarkType.values) {
-          final landmark = poses.first.landmarks[type];
-          keypoints.addAll(landmark != null
-              ? [landmark.x, landmark.y, landmark.z]
-              : [0.0, 0.0, 0.0]);
+        for (var lmType in PoseLandmarkType.values) {
+          final lm = poses.first.landmarks[lmType];
+          keypoints.addAll(lm != null ? [lm.x, lm.y, lm.z] : [0.0, 0.0, 0.0]);
         }
 
-        debugPrint('📌 Keypoints: ${keypoints.length}');
         if (keypoints.length == 99) {
           final interpreter = interpreters[activeModelFile.value];
           if (interpreter == null) {
-            debugPrint('❌ Interpreter not found for ${activeModelFile.value}');
+            predictedLabel.value = 'unknown';
             isDetecting = false;
             return;
           }
 
           final inputShape = interpreter.getInputTensor(0).shape;
-          debugPrint('🔢 Input shape: $inputShape');
-          final input = [keypoints];
+          dynamic input;
+          if (inputShape.length == 4) {
+            input = List.generate(
+              inputShape[1],
+              (_) => List.generate(
+                inputShape[2],
+                (_) => List.filled(inputShape[3], 0.0),
+              ),
+            );
+            input = [input];
+          } else if (inputShape.length == 2) {
+            input = [keypoints];
+          } else {
+            predictedLabel.value = 'unknown';
+            isDetecting = false;
+            return;
+          }
+
           final output = List.generate(1, (_) => List.filled(1, 0.0));
           interpreter.run(input, output);
 
           final confidence = output[0][0];
-          final gerakanController = Get.find<GerakanController>();
-
           if (confidence > 0.8) {
-            final predicted = modelMap[activeModelFile.value]!;
-            predictedLabel.value = predicted;
-            debugPrint('🎯 Predicted: $predicted (Confidence: $confidence)');
-
-            final exercise = gerakanController.exercises
-                .firstWhereOrNull((e) => e.name == predicted);
-            if (exercise != null && !exercise.isCompleted) {
-              gerakanController.startCounting(predicted);
-            }
+            predictedLabel.value = modelMap[activeModelFile.value]!;
+            debugPrint("🎯 Detected: ${predictedLabel.value} (${(confidence * 100).toStringAsFixed(1)}%)");
           } else {
-            debugPrint('❓ Confidence too low: $confidence');
             predictedLabel.value = 'unknown';
-            Get.find<GerakanController>().stopCounting();
+            debugPrint("🤏 Low confidence: ${(confidence * 100).toStringAsFixed(1)}%");
           }
-        } else {
-          debugPrint('⚠️ Keypoint count mismatch: ${keypoints.length}');
         }
       }
     } catch (e) {
-      debugPrint('❌ Detection error: $e');
+      debugPrint("❌ Detection error: $e");
     } finally {
       isDetecting = false;
     }
