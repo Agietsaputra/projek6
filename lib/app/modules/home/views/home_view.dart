@@ -61,7 +61,7 @@ class HomeView extends StatelessWidget {
                   summaryRow(
                     "Lari Terakhir",
                     lastRun != null
-                        ? "🕒 ${lastRun['durasi']} menit - ${lastRun['jarak']} KM"
+                        ? "🕒 ${lastRun['durasi']?.toString() ?? '0'} menit - ${(lastRun['jarak'] ?? 0.0).toStringAsFixed(2)} KM"
                         : "Belum ada",
                   ),
                   summaryRow("Total Minggu Ini", "🏃‍♂️ ${totalKm.toStringAsFixed(2)} KM"),

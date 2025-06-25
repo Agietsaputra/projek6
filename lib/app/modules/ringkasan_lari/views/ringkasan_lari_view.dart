@@ -52,16 +52,22 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
                     durasi: controller.durasi,
                     jarak: controller.jarak,
                   );
-                  Get.snackbar('✅ Berhasil', 'Riwayat lari disimpan',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.green,
-                      colorText: Colors.white);
+                  Get.snackbar(
+                    '✅ Berhasil',
+                    'Riwayat lari disimpan',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
                   Get.offAllNamed('/home');
                 } catch (e) {
-                  Get.snackbar('❌ Gagal', '$e',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.red,
-                      colorText: Colors.white);
+                  Get.snackbar(
+                    '❌ Gagal',
+                    '$e',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
                 }
               },
               icon: const Icon(Icons.save),

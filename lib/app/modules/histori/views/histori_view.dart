@@ -22,11 +22,12 @@ class HistoriView extends GetView<HistoriController> {
         ),
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF72DEC2)),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF1A1A3F)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF1A1A3F)),
+          );
         }
 
         if (controller.riwayatLari.isEmpty) {
@@ -75,8 +76,9 @@ class HistoriView extends GetView<HistoriController> {
                               final index = value.toInt();
                               if (index >= 0 && index < controller.riwayatLari.length) {
                                 final tanggal = controller.riwayatLari[index]['tanggal'] ?? '';
+                                final split = tanggal.split('-');
                                 return Text(
-                                  tanggal.split('-').last,
+                                  split.length >= 2 ? '${split[2]}/${split[1]}' : '',
                                   style: const TextStyle(fontSize: 10, color: Color(0xFF1A1A3F)),
                                 );
                               }
@@ -111,7 +113,10 @@ class HistoriView extends GetView<HistoriController> {
                           isCurved: true,
                           color: const Color(0xFF72DEC2),
                           barWidth: 3,
-                          belowBarData: BarAreaData(show: true, color: Color(0xFF72DEC2).withOpacity(0.2)),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            color: const Color(0xFF72DEC2).withOpacity(0.2),
+                          ),
                           dotData: FlDotData(show: true),
                         ),
                       ],
@@ -135,6 +140,10 @@ class HistoriView extends GetView<HistoriController> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   final item = controller.riwayatLari[index];
+                  final durasi = item['durasi']?.toString() ?? '0';
+                  final jarak = (item['jarak'] ?? 0).toStringAsFixed(2);
+                  final tanggal = item['tanggal'] ?? '-';
+
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
@@ -145,15 +154,15 @@ class HistoriView extends GetView<HistoriController> {
                     child: ListTile(
                       leading: const Icon(Icons.directions_run, color: Color(0xFF1A1A3F)),
                       title: Text(
-                        "Durasi: ${item['durasi']} detik",
+                        "Durasi: $durasi detik",
                         style: const TextStyle(color: Colors.black87),
                       ),
                       subtitle: Text(
-                        "Jarak: ${item['jarak']} km",
+                        "Jarak: $jarak km",
                         style: const TextStyle(color: Colors.black54),
                       ),
                       trailing: Text(
-                        item['tanggal'] ?? '',
+                        tanggal,
                         style: const TextStyle(color: Color(0xFF1A1A3F), fontWeight: FontWeight.w500),
                       ),
                     ),

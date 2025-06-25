@@ -29,15 +29,14 @@ class HomeController extends GetxController {
   final lastRun = Rxn<Map<String, dynamic>>();
   final totalDistanceThisWeek = 0.0.obs;
   var chartData = <String, double>{}.obs;
-
-  final articles = <Article>[].obs; // ✅ Artikel untuk HomeView
+  final articles = <Article>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     _loadUserData();
     fetchRingkasanAktivitas();
-    loadManualArticles(); // ✅ Ambil artikel langsung
+    loadManualArticles();
   }
 
   void _loadUserData() async {
@@ -79,6 +78,7 @@ class HomeController extends GetxController {
   Future<void> fetchRingkasanAktivitas() async {
     try {
       final data = await _apiProvider.getRiwayatLari();
+
       if (data.isNotEmpty) {
         lastRun.value = data.last;
       }
@@ -87,10 +87,14 @@ class HomeController extends GetxController {
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
       final total = data.where((e) {
-        final dateStr = e['tanggal'] ?? '';
+        final dateStr = e['tanggal']?.toString() ?? '';
         final date = DateTime.tryParse(dateStr);
         return date != null && date.isAfter(startOfWeek);
-      }).fold<double>(0.0, (sum, e) => sum + (e['jarak'] ?? 0.0));
+      }).fold<double>(0.0, (sum, e) {
+        final jarak = (e['jarak'] is num) ? (e['jarak'] as num).toDouble() : 0.0;
+        return sum + jarak;
+      });
+
       totalDistanceThisWeek.value = total;
 
       final tempData = {
@@ -99,11 +103,12 @@ class HomeController extends GetxController {
       };
 
       for (var e in data) {
-        final dateStr = e['tanggal'] ?? '';
+        final dateStr = e['tanggal']?.toString() ?? '';
         final date = DateTime.tryParse(dateStr);
         if (date != null && date.isAfter(startOfWeek)) {
           final hari = _hariSingkat(date.weekday);
-          tempData[hari] = tempData[hari]! + (e['jarak'] ?? 0.0);
+          final jarak = (e['jarak'] is num) ? (e['jarak'] as num).toDouble() : 0.0;
+          tempData[hari] = tempData[hari]! + jarak;
         }
       }
 
