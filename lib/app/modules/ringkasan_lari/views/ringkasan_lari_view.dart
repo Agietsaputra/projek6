@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:apa/app/data/api_provider.dart'; // Pastikan import ini sesuai dengan strukturmu
 import '../controllers/ringkasan_lari_controller.dart';
 
 class RingkasanLariView extends GetView<RingkasanLariController> {
@@ -8,8 +7,6 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
 
   @override
   Widget build(BuildContext context) {
-    final ApiProvider apiProvider = ApiProvider();
-
     return Scaffold(
       backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
@@ -51,7 +48,7 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
             ElevatedButton.icon(
               onPressed: () async {
                 try {
-                  await apiProvider.simpanRiwayatLari(
+                  await controller.apiProvider.simpanRiwayatLari(
                     durasi: controller.durasi,
                     jarak: controller.jarak,
                   );
