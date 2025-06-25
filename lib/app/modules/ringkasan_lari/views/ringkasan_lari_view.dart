@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:apa/app/data/api_provider.dart'; // Pastikan import ini sesuai dengan strukturmu
 import '../controllers/ringkasan_lari_controller.dart';
 
 class RingkasanLariView extends GetView<RingkasanLariController> {
@@ -7,6 +8,8 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
 
   @override
   Widget build(BuildContext context) {
+    final ApiProvider apiProvider = ApiProvider();
+
     return Scaffold(
       backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
@@ -46,12 +49,26 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
             ),
             const SizedBox(height: 40),
             ElevatedButton.icon(
-              onPressed: () {
-                // Arahkan kembali ke halaman Home atau Riwayat jika sudah dibuat
-                Get.offAllNamed('/home');
+              onPressed: () async {
+                try {
+                  await apiProvider.simpanRiwayatLari(
+                    durasi: controller.durasi,
+                    jarak: controller.jarak,
+                  );
+                  Get.snackbar('✅ Berhasil', 'Riwayat lari disimpan',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.green,
+                      colorText: Colors.white);
+                  Get.offAllNamed('/home');
+                } catch (e) {
+                  Get.snackbar('❌ Gagal', '$e',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white);
+                }
               },
-              icon: const Icon(Icons.home),
-              label: const Text("Kembali ke Beranda"),
+              icon: const Icon(Icons.save),
+              label: const Text("Simpan ke History"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A1A3F),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
