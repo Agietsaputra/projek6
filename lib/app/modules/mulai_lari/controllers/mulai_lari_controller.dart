@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'dart:async';
 
 class MulaiLariController extends GetxController {
@@ -9,11 +10,33 @@ class MulaiLariController extends GetxController {
   RxDouble totalDistance = 0.0.obs;
   RxBool isRunning = false.obs;
   RxInt elapsedSeconds = 0.obs;
+  RxDouble heading = 0.0.obs;
+
+  Rx<LatLng?> currentLocation = Rx<LatLng?>(null);
 
   StreamSubscription<Position>? positionStream;
   Timer? _timer;
 
   final distance = const Distance();
+  late MapController mapController;
+
+  @override
+  void onInit() {
+    super.onInit();
+    mapController = MapController();
+    getCurrentLocation(); // ambil posisi awal saat init
+  }
+
+  Future<void> getCurrentLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+      currentLocation.value = LatLng(position.latitude, position.longitude);
+    } catch (e) {
+      Get.snackbar("Lokasi Gagal", "$e");
+    }
+  }
 
   void startRun() async {
     try {
@@ -30,15 +53,22 @@ class MulaiLariController extends GetxController {
 
       positionStream = Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
+          accuracy: LocationAccuracy.bestForNavigation,
           distanceFilter: 5,
         ),
       ).listen((Position position) {
         final point = LatLng(position.latitude, position.longitude);
+
         if (routePoints.isNotEmpty) {
           totalDistance.value += distance(routePoints.last, point);
         }
+
         routePoints.add(point);
+        heading.value = position.heading;
+
+        if (isRunning.value) {
+          mapController.move(point, 16.0); // follow user
+        }
       });
     } catch (e) {
       Get.snackbar(
@@ -59,7 +89,7 @@ class MulaiLariController extends GetxController {
 
     Get.toNamed('/ringkasan-lari', arguments: {
       'durasi': elapsedSeconds.value,
-      'jarak': totalDistance.value / 1000, // km
+      'jarak': totalDistance.value / 1000,
       'rute': routePoints,
     });
   }
@@ -72,16 +102,14 @@ class MulaiLariController extends GetxController {
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
-
     if (permission == LocationPermission.denied) {
-      // Tampilkan dialog alasan sebelum minta izin
       await Get.defaultDialog(
         title: "Izin Lokasi Dibutuhkan",
         middleText:
             "Aplikasi ini memerlukan akses lokasi untuk melacak rute lari kamu secara real-time.",
         confirm: ElevatedButton(
           onPressed: () async {
-            Get.back(); // Tutup dialog
+            Get.back();
             final result = await Geolocator.requestPermission();
             if (result == LocationPermission.denied ||
                 result == LocationPermission.deniedForever) {
@@ -97,7 +125,6 @@ class MulaiLariController extends GetxController {
       );
     }
 
-    // Jika sudah ditolak permanen
     if (permission == LocationPermission.deniedForever) {
       await Get.defaultDialog(
         title: "Izin Lokasi Ditolak Permanen",

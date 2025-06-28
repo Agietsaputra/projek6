@@ -22,15 +22,17 @@ class MulaiLariView extends GetView<MulaiLariController> {
           children: [
             Expanded(
               child: FlutterMap(
+                mapController: controller.mapController,
                 options: MapOptions(
                   initialCenter: controller.routePoints.isNotEmpty
                       ? controller.routePoints.last
                       : LatLng(-6.200000, 106.816666), // Default Jakarta
-                  initialZoom: 16,
+                  initialZoom: 16.0,
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    urlTemplate:
+                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                     subdomains: const ['a', 'b', 'c'],
                   ),
                   PolylineLayer(
@@ -49,9 +51,16 @@ class MulaiLariView extends GetView<MulaiLariController> {
                               point: controller.routePoints.last,
                               width: 60,
                               height: 60,
-                              child: const Icon(Icons.person_pin_circle,
-                                  color: Colors.red, size: 40),
-                            )
+                              child: Transform.rotate(
+                                angle: controller.heading.value *
+                                    (3.14 / 180), // konversi ke radian
+                                child: const Icon(
+                                  Icons.navigation,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
                           ]
                         : [],
                   ),
@@ -63,19 +72,28 @@ class MulaiLariView extends GetView<MulaiLariController> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text("Durasi: ${formatDuration(controller.elapsedSeconds.value)}",
-                      style: const TextStyle(fontSize: 18)),
-                  Text("Jarak: ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} km",
-                      style: const TextStyle(fontSize: 18)),
+                  Text(
+                    "Durasi: ${formatDuration(controller.elapsedSeconds.value)}",
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  Text(
+                    "Jarak: ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} km",
+                    style: const TextStyle(fontSize: 18),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    icon: Icon(controller.isRunning.value ? Icons.stop : Icons.play_arrow),
-                    label: Text(controller.isRunning.value ? "Selesai Lari" : "Mulai Lari"),
+                    icon: Icon(controller.isRunning.value
+                        ? Icons.stop
+                        : Icons.play_arrow),
+                    label: Text(controller.isRunning.value
+                        ? "Selesai Lari"
+                        : "Mulai Lari"),
                     onPressed: controller.isRunning.value
                         ? controller.stopRun
                         : controller.startRun,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 16),
                     ),
                   ),
                 ],

@@ -307,7 +307,7 @@ Future<List<Map<String, dynamic>>> getRiwayatLari() async {
 
   if (response.statusCode == 200) {
     final List<dynamic> data = body['riwayat_lari'] ?? [];
-    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    return data.map((e) => Map<String, dynamic>.from(e)).toList(); 
   } else {
     throw body['message'] ?? 'Gagal mengambil riwayat lari';
   }
