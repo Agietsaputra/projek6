@@ -5,6 +5,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'dart:async';
 
+import 'package:apa/app/data/api_provider.dart'; // ✅ Sesuaikan dengan path project kamu
+
 class MulaiLariController extends GetxController {
   RxList<LatLng> routePoints = <LatLng>[].obs;
   RxDouble totalDistance = 0.0.obs;
@@ -24,7 +26,7 @@ class MulaiLariController extends GetxController {
   void onInit() {
     super.onInit();
     mapController = MapController();
-    getCurrentLocation(); // ambil posisi awal saat init
+    getCurrentLocation(); // Ambil posisi awal saat init
   }
 
   Future<void> getCurrentLocation() async {
@@ -82,15 +84,38 @@ class MulaiLariController extends GetxController {
     }
   }
 
-  void stopRun() {
+  void stopRun() async {
     isRunning.value = false;
     _timer?.cancel();
     positionStream?.cancel();
 
+    final serializedRoute = routePoints
+        .map((e) => {'latitude': e.latitude, 'longitude': e.longitude})
+        .toList();
+
+    final durasi = elapsedSeconds.value;
+    final jarakKm = totalDistance.value / 1000;
+
+    try {
+      // ✅ Kirim ke backend
+      final api = ApiProvider();
+      await api.simpanRiwayatLari(
+        durasi: durasi,
+        jarak: jarakKm,
+        rute: serializedRoute,
+      );
+    } catch (e) {
+      Get.snackbar("Gagal Simpan Riwayat", "$e",
+          backgroundColor: Colors.red[100],
+          colorText: Colors.red[900],
+          snackPosition: SnackPosition.TOP);
+    }
+
+    // ✅ Navigasi ke ringkasan
     Get.toNamed('/ringkasan-lari', arguments: {
-      'durasi': elapsedSeconds.value,
-      'jarak': totalDistance.value / 1000,
-      'rute': routePoints,
+      'durasi': durasi,
+      'jarak': jarakKm,
+      'rute': serializedRoute,
     });
   }
 

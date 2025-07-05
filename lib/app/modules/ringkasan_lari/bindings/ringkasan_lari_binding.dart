@@ -1,5 +1,5 @@
+import 'package:apa/app/modules/ringkasan_lari/controllers/ringkasan_lari_controller.dart';
 import 'package:get/get.dart';
-import '../controllers/ringkasan_lari_controller.dart';
 
 class RingkasanLariBinding extends Bindings {
   @override

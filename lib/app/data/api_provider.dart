@@ -266,6 +266,7 @@ class ApiProvider {
 Future<void> simpanRiwayatLari({
   required int durasi,
   required double jarak,
+  required List<Map<String, double>> rute,
 }) async {
   final token = await _storage.read(key: 'token');
   if (token == null) throw 'Token tidak ditemukan';
@@ -280,6 +281,7 @@ Future<void> simpanRiwayatLari({
     body: jsonEncode({
       'durasi': durasi,
       'jarak': jarak,
+      'rute': rute,
     }),
   );
 
@@ -289,6 +291,7 @@ Future<void> simpanRiwayatLari({
     throw body['message'] ?? 'Gagal menyimpan riwayat lari';
   }
 }
+
 
 // Ambil riwayat lari user dari backend
 Future<List<Map<String, dynamic>>> getRiwayatLari() async {

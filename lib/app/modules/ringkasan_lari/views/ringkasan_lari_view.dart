@@ -1,137 +1,98 @@
-import 'package:apa/app/modules/mulai_lari/controllers/mulai_lari_controller.dart';
+import 'package:apa/app/modules/ringkasan_lari/controllers/ringkasan_lari_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
-class MulaiLariView extends GetView<MulaiLariController> {
-  const MulaiLariView({Key? key}) : super(key: key);
-
-  String formatDuration(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return "$m:$s";
-  }
+class RingkasanLariView extends GetView<RingkasanLariController> {
+  const RingkasanLariView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Mulai Lari")),
-      body: Obx(() {
-        // ⏳ Loading jika belum ada lokasi
-        if (controller.currentLocation.value == null &&
-            controller.routePoints.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final route = controller.route;
+    final startPoint = route.isNotEmpty ? route.first : const LatLng(0, 0);
 
-        return Column(
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  FlutterMap(
-                    mapController: controller.mapController,
-                    options: MapOptions(
-                      initialCenter: controller.routePoints.isNotEmpty
-                          ? controller.routePoints.last
-                          : controller.currentLocation.value!,
-                      initialZoom: 16.0,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        subdomains: const ['a', 'b', 'c'],
-                      ),
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: controller.routePoints,
-                            strokeWidth: 4.0,
-                            color: Colors.blue,
-                          ),
-                        ],
-                      ),
-                      MarkerLayer(
-                        markers: controller.routePoints.isNotEmpty
-                            ? [
-                                Marker(
-                                  point: controller.routePoints.last,
-                                  width: 60,
-                                  height: 60,
-                                  child: Transform.rotate(
-                                    angle: controller.heading.value *
-                                        (3.14 / 180),
-                                    child: const Icon(
-                                      Icons.navigation,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                  ),
-                                ),
-                              ]
-                            : [],
+    return Scaffold(
+      appBar: AppBar(title: const Text('Ringkasan Lari')),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 2,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: startPoint,
+                initialZoom: 16,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
+                ),
+                if (route.length > 1)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: route,
+                        color: Colors.blue,
+                        strokeWidth: 4.0,
                       ),
                     ],
                   ),
-
-                  // ✅ Tombol Re-center
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: FloatingActionButton(
-                      heroTag: "recenter",
-                      onPressed: () {
-                        final current = controller.routePoints.isNotEmpty
-                            ? controller.routePoints.last
-                            : controller.currentLocation.value;
-                        if (current != null) {
-                          controller.mapController.move(current, 16.0);
-                        }
-                      },
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      child: const Icon(Icons.my_location),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: startPoint,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(Icons.directions_run, color: Colors.green),
                     ),
-                  ),
-                ],
-              ),
+                    if (route.length > 1)
+                      Marker(
+                        point: route.last,
+                        width: 40,
+                        height: 40,
+                        child: const Icon(Icons.flag, color: Colors.red),
+                      ),
+                  ],
+                ),
+              ],
             ),
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
+          ),
+          Expanded(
+            flex: 1,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Durasi: ${formatDuration(controller.elapsedSeconds.value)}",
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  Text(
-                    "Jarak: ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} km",
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    icon: Icon(controller.isRunning.value
-                        ? Icons.stop
-                        : Icons.play_arrow),
-                    label: Text(controller.isRunning.value
-                        ? "Selesai Lari"
-                        : "Mulai Lari"),
-                    onPressed: controller.isRunning.value
-                        ? controller.stopRun
-                        : controller.startRun,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 16),
+                  Text('Durasi: ${controller.formattedDuration}', style: const TextStyle(fontSize: 20)),
+                  const SizedBox(height: 8),
+                  Text('Jarak: ${controller.formattedDistance}', style: const TextStyle(fontSize: 20)),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Get.offAllNamed('/home'),
+                      icon: const Icon(Icons.home),
+                      label: const Text('Kembali ke Beranda'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.blueAccent,
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        );
-      }),
+          ),
+        ],
+      ),
     );
   }
 }

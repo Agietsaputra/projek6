@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../controllers/mulai_lari_controller.dart';
 
+
 class MulaiLariView extends GetView<MulaiLariController> {
   const MulaiLariView({Key? key}) : super(key: key);
 
@@ -18,51 +19,81 @@ class MulaiLariView extends GetView<MulaiLariController> {
     return Scaffold(
       appBar: AppBar(title: const Text("Mulai Lari")),
       body: Obx(() {
+        // ⏳ Loading jika belum ada lokasi
+        if (controller.currentLocation.value == null &&
+            controller.routePoints.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
         return Column(
           children: [
             Expanded(
-              child: FlutterMap(
-                mapController: controller.mapController,
-                options: MapOptions(
-                  initialCenter: controller.routePoints.isNotEmpty
-                      ? controller.routePoints.last
-                      : LatLng(-6.200000, 106.816666), // Default Jakarta
-                  initialZoom: 16.0,
-                ),
+              child: Stack(
                 children: [
-                  TileLayer(
-                    urlTemplate:
-                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    subdomains: const ['a', 'b', 'c'],
-                  ),
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: controller.routePoints,
-                        strokeWidth: 4.0,
-                        color: Colors.blue,
+                  FlutterMap(
+                    mapController: controller.mapController,
+                    options: MapOptions(
+                      initialCenter: controller.routePoints.isNotEmpty
+                          ? controller.routePoints.last
+                          : controller.currentLocation.value!,
+                      initialZoom: 16.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        subdomains: const ['a', 'b', 'c'],
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: controller.routePoints,
+                            strokeWidth: 4.0,
+                            color: Colors.blue,
+                          ),
+                        ],
+                      ),
+                      MarkerLayer(
+                        markers: controller.routePoints.isNotEmpty
+                            ? [
+                                Marker(
+                                  point: controller.routePoints.last,
+                                  width: 60,
+                                  height: 60,
+                                  child: Transform.rotate(
+                                    angle: controller.heading.value *
+                                        (3.14 / 180),
+                                    child: const Icon(
+                                      Icons.navigation,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ),
+                              ]
+                            : [],
                       ),
                     ],
                   ),
-                  MarkerLayer(
-                    markers: controller.routePoints.isNotEmpty
-                        ? [
-                            Marker(
-                              point: controller.routePoints.last,
-                              width: 60,
-                              height: 60,
-                              child: Transform.rotate(
-                                angle: controller.heading.value *
-                                    (3.14 / 180), // konversi ke radian
-                                child: const Icon(
-                                  Icons.navigation,
-                                  color: Colors.red,
-                                  size: 40,
-                                ),
-                              ),
-                            ),
-                          ]
-                        : [],
+
+                  // ✅ Tombol Re-center
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: FloatingActionButton(
+                      heroTag: "recenter",
+                      onPressed: () {
+                        final current = controller.routePoints.isNotEmpty
+                            ? controller.routePoints.last
+                            : controller.currentLocation.value;
+                        if (current != null) {
+                          controller.mapController.move(current, 16.0);
+                        }
+                      },
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      child: const Icon(Icons.my_location),
+                    ),
                   ),
                 ],
               ),

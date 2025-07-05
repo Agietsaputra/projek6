@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/DetailRiwayat/bindings/detail_riwayat_binding.dart';
+import '../modules/DetailRiwayat/views/detail_riwayat_view.dart';
 import '../modules/activity/bindings/activity_binding.dart';
 import '../modules/activity/views/activity_view.dart';
 import '../modules/deteksi/bindings/deteksi_binding.dart';
@@ -118,8 +120,13 @@ class AppPages {
     ),
     GetPage(
       name: Routes.RINGKASAN_LARI,
-      page: () => const RingkasanLariView(),
+      page: () => RingkasanLariView(),
       binding: RingkasanLariBinding(),
+    ),
+    GetPage(
+      name: Routes.DETAIL_RIWAYAT,
+      page: () => const DetailRiwayatView(),
+      binding: DetailRiwayatBinding(),
     ),
   ];
 }
