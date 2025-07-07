@@ -10,10 +10,14 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
   @override
   Widget build(BuildContext context) {
     final route = controller.route;
-    final startPoint = route.isNotEmpty ? route.first : const LatLng(0, 0);
+    final startPoint = route.isNotEmpty ? route.first : const LatLng(-6.200000, 106.816666); // Default ke Jakarta
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ringkasan Lari')),
+      appBar: AppBar(
+        title: const Text('Ringkasan Lari'),
+        backgroundColor: const Color(0xFF1A1A3F),
+        foregroundColor: Colors.white,
+      ),
       body: Column(
         children: [
           Expanded(
@@ -44,14 +48,14 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
                       point: startPoint,
                       width: 40,
                       height: 40,
-                      child: const Icon(Icons.directions_run, color: Colors.green),
+                      child: const Icon(Icons.directions_run, color: Colors.green, size: 32),
                     ),
                     if (route.length > 1)
                       Marker(
                         point: route.last,
                         width: 40,
                         height: 40,
-                        child: const Icon(Icons.flag, color: Colors.red),
+                        child: const Icon(Icons.flag, color: Colors.red, size: 32),
                       ),
                   ],
                 ),
@@ -82,7 +86,8 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
                       label: const Text('Kembali ke Beranda'),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: const Color(0xFF1A1A3F),
+                        foregroundColor: Colors.white,
                         textStyle: const TextStyle(fontSize: 16),
                       ),
                     ),

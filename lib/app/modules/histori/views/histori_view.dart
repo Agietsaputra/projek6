@@ -12,9 +12,16 @@ class HistoriView extends GetView<HistoriController> {
     return '${menit.toString().padLeft(2, '0')}:${sisaDetik.toString().padLeft(2, '0')}';
   }
 
-  String formatTanggal(String? isoDate) {
-    if (isoDate == null || isoDate.isEmpty) return '-';
-    final date = DateTime.tryParse(isoDate);
+  String formatTanggal(dynamic tanggalRaw) {
+    DateTime? date;
+
+    // Coba parse dari berbagai kemungkinan
+    if (tanggalRaw is String) {
+      date = DateTime.tryParse(tanggalRaw);
+    } else if (tanggalRaw is Map && tanggalRaw.containsKey("\$date")) {
+      date = DateTime.tryParse(tanggalRaw["\$date"]);
+    }
+
     if (date == null) return '-';
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -22,14 +29,28 @@ class HistoriView extends GetView<HistoriController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Riwayat Lari')),
+      backgroundColor: const Color(0xFFE1F6F4),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1A1A3F),
+        foregroundColor: Colors.white,
+        title: const Text('Riwayat Lari'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Get.offAllNamed('/home'),
+        ),
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (controller.riwayatLari.isEmpty) {
-          return const Center(child: Text('Belum ada riwayat lari.'));
+          return const Center(
+            child: Text(
+              'Belum ada riwayat lari.',
+              style: TextStyle(color: Color(0xFF1A1A3F), fontWeight: FontWeight.w600),
+            ),
+          );
         }
 
         return ListView.builder(
@@ -39,7 +60,7 @@ class HistoriView extends GetView<HistoriController> {
             final durasiDetik = item['durasi'] ?? 0;
             final durasi = formatDurasi(durasiDetik);
             final jarak = (item['jarak'] ?? 0.0).toStringAsFixed(2);
-            final tanggal = formatTanggal(item['tanggal'] ?? '-');
+            final tanggal = formatTanggal(item['tanggal']);
 
             final List<dynamic> ruteRaw = item['rute'] ?? [];
             final List<LatLng> rute = ruteRaw.map((e) {
@@ -64,7 +85,7 @@ class HistoriView extends GetView<HistoriController> {
                   Get.toNamed('/detail-riwayat', arguments: {
                     'durasi': durasiDetik,
                     'jarak': item['jarak'],
-                    'route': rute,
+                    'rute': rute,
                   });
                 },
               ),

@@ -79,13 +79,22 @@ class HomeController extends GetxController {
     try {
       final data = await _apiProvider.getRiwayatLari();
 
-      if (data.isNotEmpty) {
-        lastRun.value = data.last;
-      }
-
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
+      // 🔍 Ambil data lari hari ini
+      final todayRuns = data.where((e) {
+        final dateStr = e['tanggal']?.toString() ?? '';
+        final date = DateTime.tryParse(dateStr);
+        return date != null &&
+            date.year == now.year &&
+            date.month == now.month &&
+            date.day == now.day;
+      }).toList();
+
+      lastRun.value = todayRuns.isNotEmpty ? todayRuns.last : null;
+
+      // 📊 Total jarak minggu ini
       final total = data.where((e) {
         final dateStr = e['tanggal']?.toString() ?? '';
         final date = DateTime.tryParse(dateStr);
@@ -97,6 +106,7 @@ class HomeController extends GetxController {
 
       totalDistanceThisWeek.value = total;
 
+      // 📈 Data grafik per hari
       final tempData = {
         'Sen': 0.0, 'Sel': 0.0, 'Rab': 0.0,
         'Kam': 0.0, 'Jum': 0.0, 'Sab': 0.0, 'Min': 0.0

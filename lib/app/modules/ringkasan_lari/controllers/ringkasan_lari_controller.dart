@@ -16,10 +16,20 @@ class RingkasanLariController extends GetxController {
     durasi = args['durasi'] ?? 0;
     jarak = args['jarak'] ?? 0.0;
 
-    // ✅ FIX: parsing koordinat dari Map
-    route = (args['route'] as List)
-        .map((e) => LatLng(e['latitude'], e['longitude']))
-        .toList();
+    final rawRute = args['rute'];
+    if (rawRute is List) {
+      // Periksa apakah elemen adalah Map (dari JSON) atau LatLng
+      route = rawRute.map((e) {
+        if (e is LatLng) return e;
+        if (e is Map) {
+          return LatLng(e['latitude'], e['longitude']);
+        }
+        return LatLng(0, 0); // fallback kalau formatnya aneh
+      }).toList();
+    } else {
+      route = [];
+      print("⚠️ Rute tidak valid atau null");
+    }
 
     simpanRiwayat(); // 🟢 Simpan otomatis saat masuk
   }

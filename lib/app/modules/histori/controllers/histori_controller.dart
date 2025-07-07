@@ -20,13 +20,12 @@ class HistoriController extends GetxController {
       // Ambil data dari API
       final data = await apiProvider.getRiwayatLari();
 
-      // Debug log jika perlu
-      // print("📦 Data Diterima: $data");
+      print("📦 Riwayat data mentah: $data");
 
-      // Urutkan berdasarkan tanggal (jika tersedia)
+      // Urutkan berdasarkan tanggal (format string / {"\$date": ...})
       data.sort((a, b) {
-        final aDate = DateTime.tryParse(a['tanggal'] ?? '') ?? DateTime(1970);
-        final bDate = DateTime.tryParse(b['tanggal'] ?? '') ?? DateTime(1970);
+        final aDate = parseTanggal(a['tanggal']);
+        final bDate = parseTanggal(b['tanggal']);
         return bDate.compareTo(aDate); // terbaru di atas
       });
 
@@ -43,5 +42,14 @@ class HistoriController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  DateTime parseTanggal(dynamic raw) {
+    if (raw is String) {
+      return DateTime.tryParse(raw) ?? DateTime(1970);
+    } else if (raw is Map && raw.containsKey("\$date")) {
+      return DateTime.tryParse(raw["\$date"]) ?? DateTime(1970);
+    }
+    return DateTime(1970);
   }
 }

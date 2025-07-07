@@ -4,7 +4,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../controllers/mulai_lari_controller.dart';
 
-
 class MulaiLariView extends GetView<MulaiLariController> {
   const MulaiLariView({Key? key}) : super(key: key);
 
@@ -17,9 +16,14 @@ class MulaiLariView extends GetView<MulaiLariController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Mulai Lari")),
+      backgroundColor: const Color(0xFFE1F6F4),
+      appBar: AppBar(
+        title: const Text("Mulai Lari"),
+        backgroundColor: const Color(0xFF1A1A3F),
+        foregroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+      ),
       body: Obx(() {
-        // ⏳ Loading jika belum ada lokasi
         if (controller.currentLocation.value == null &&
             controller.routePoints.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -27,6 +31,7 @@ class MulaiLariView extends GetView<MulaiLariController> {
 
         return Column(
           children: [
+            // === MAP ===
             Expanded(
               child: Stack(
                 children: [
@@ -43,13 +48,14 @@ class MulaiLariView extends GetView<MulaiLariController> {
                         urlTemplate:
                             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                         subdomains: const ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.app',
                       ),
                       PolylineLayer(
                         polylines: [
                           Polyline(
                             points: controller.routePoints,
                             strokeWidth: 4.0,
-                            color: Colors.blue,
+                            color: Colors.cyan,
                           ),
                         ],
                       ),
@@ -61,8 +67,7 @@ class MulaiLariView extends GetView<MulaiLariController> {
                                   width: 60,
                                   height: 60,
                                   child: Transform.rotate(
-                                    angle: controller.heading.value *
-                                        (3.14 / 180),
+                                    angle: controller.heading.value * (3.14 / 180),
                                     child: const Icon(
                                       Icons.navigation,
                                       color: Colors.red,
@@ -76,7 +81,7 @@ class MulaiLariView extends GetView<MulaiLariController> {
                     ],
                   ),
 
-                  // ✅ Tombol Re-center
+                  // === Recenter Button ===
                   Positioned(
                     bottom: 16,
                     right: 16,
@@ -91,40 +96,53 @@ class MulaiLariView extends GetView<MulaiLariController> {
                         }
                       },
                       backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
+                      foregroundColor: const Color(0xFF1A1A3F),
                       child: const Icon(Icons.my_location),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // === INFO & BUTTON ===
             Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     "Durasi: ${formatDuration(controller.elapsedSeconds.value)}",
-                    style: const TextStyle(fontSize: 18),
+                    style: const TextStyle(fontSize: 18, color: Color(0xFF1A1A3F)),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     "Jarak: ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} km",
-                    style: const TextStyle(fontSize: 18),
+                    style: const TextStyle(fontSize: 18, color: Color(0xFF1A1A3F)),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    icon: Icon(controller.isRunning.value
-                        ? Icons.stop
-                        : Icons.play_arrow),
-                    label: Text(controller.isRunning.value
-                        ? "Selesai Lari"
-                        : "Mulai Lari"),
-                    onPressed: controller.isRunning.value
-                        ? controller.stopRun
-                        : controller.startRun,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 16),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: Icon(controller.isRunning.value
+                          ? Icons.stop
+                          : Icons.play_arrow),
+                      label: Text(controller.isRunning.value
+                          ? "Selesai Lari"
+                          : "Mulai Lari"),
+                      onPressed: controller.isRunning.value
+                          ? controller.stopRun
+                          : controller.startRun,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1A1A3F),
+                        foregroundColor: const Color(0xFF72DEC2),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                 ],

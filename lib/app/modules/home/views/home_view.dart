@@ -1,3 +1,4 @@
+// ... import tetap sama
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,10 +18,7 @@ class HomeView extends StatelessWidget {
         elevation: 0,
         title: SizedBox(
           height: 40,
-          child: Image.asset(
-            'assets/images/aset.png',
-            fit: BoxFit.contain,
-          ),
+          child: Image.asset('assets/images/aset.png', fit: BoxFit.contain),
         ),
       ),
       body: SafeArea(
@@ -37,11 +35,7 @@ class HomeView extends StatelessWidget {
                 children: [
                   Text(
                     "Halo, $name 👋",
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A3F),
-                    ),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -51,11 +45,7 @@ class HomeView extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Text(
                     "📊 Ringkasan Aktivitas",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A3F),
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
                   ),
                   const SizedBox(height: 12),
                   summaryRow(
@@ -68,11 +58,7 @@ class HomeView extends StatelessWidget {
                   const SizedBox(height: 24),
                   const Text(
                     "📈 Grafik Mingguan",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A3F),
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
                   ),
                   const SizedBox(height: 12),
                   Container(
@@ -81,9 +67,7 @@ class HomeView extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
-                      ],
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))],
                     ),
                     child: Obx(() {
                       final data = controller.chartData;
@@ -144,53 +128,31 @@ class HomeView extends StatelessWidget {
                     }),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A1A3F),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.replay, color: Color(0xFF72DEC2)),
-                          label: const Text(
-                            "Mulai Stretching",
-                            style: TextStyle(color: Color(0xFF72DEC2), fontWeight: FontWeight.bold),
-                          ),
-                          onPressed: () => Get.toNamed('/gerakan'),
+
+                  // ✅ TOMBOL "Mulai Lari" SAJA
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1A1A3F),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A1A3F),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(Icons.directions_run, color: Color(0xFF72DEC2)),
-                          label: const Text(
-                            "Mulai Lari",
-                            style: TextStyle(color: Color(0xFF72DEC2), fontWeight: FontWeight.bold),
-                          ),
-                          onPressed: () => Get.toNamed('/mulai-lari'),
-                        ),
+                      icon: const Icon(Icons.directions_run, color: Color(0xFF72DEC2)),
+                      label: const Text(
+                        "Mulai Lari",
+                        style: TextStyle(color: Color(0xFF72DEC2), fontWeight: FontWeight.bold),
                       ),
-                    ],
+                      onPressed: () => Get.toNamed('/gerakan'),
+                    ),
                   ),
+
                   const SizedBox(height: 28),
                   const Text(
                     "💡 Tips Hari Ini:",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A3F),
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A3F)),
                   ),
                   const SizedBox(height: 6),
                   Container(
@@ -203,21 +165,13 @@ class HomeView extends StatelessWidget {
                     ),
                     child: const Text(
                       "“Stretching sebelum lari bantu mencegah cedera!”",
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        fontSize: 14,
-                        color: Colors.black87,
-                      ),
+                      style: TextStyle(fontStyle: FontStyle.italic, fontSize: 14, color: Colors.black87),
                     ),
                   ),
                   const SizedBox(height: 28),
                   const Text(
                     "📰 Artikel Terkini",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A3F),
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
                   ),
                   const SizedBox(height: 10),
                   Obx(() {
@@ -244,10 +198,7 @@ class HomeView extends StatelessWidget {
                           ),
                           child: ListTile(
                             leading: const Icon(Icons.article_outlined, color: Color(0xFF1A1A3F)),
-                            title: Text(
-                              article.judul,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
-                            ),
+                            title: Text(article.judul, style: const TextStyle(fontWeight: FontWeight.w600)),
                             subtitle: Text(
                               DateFormat('dd MMM yyyy', 'id_ID').format(article.tanggal),
                               style: const TextStyle(color: Colors.black54),
@@ -297,7 +248,7 @@ class HomeView extends StatelessWidget {
               Get.offAllNamed('/history');
               break;
             case 3:
-              Get.offAllNamed('/visualisasi');
+              Get.offAllNamed('/visualisasi'); // atau /info jika kamu ubah rutenya
               break;
             case 4:
               Get.offAllNamed('/profile');
@@ -308,7 +259,7 @@ class HomeView extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.camera_alt), label: 'Deteksi'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Visualisasi'),
+          BottomNavigationBarItem(icon: Icon(Icons.info_outline), label: 'Info'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
       ),
