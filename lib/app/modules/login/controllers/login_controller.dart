@@ -95,6 +95,7 @@ class LoginController extends GetxController {
 
           final box = GetStorage();
           box.write('userName', name);
+          box.write('email', email);
           box.write('userEmail', email);
           box.write('userUsername', username);
           box.write('userPhoto', photo);
@@ -177,6 +178,20 @@ class LoginController extends GetxController {
 
       await _auth.signInWithCredential(credential);
       user.value = _auth.currentUser;
+      // Ambil token Firebase
+      final idToken = await _auth.currentUser?.getIdToken();
+
+// Simpan token ke storage (penting untuk API selanjutnya)
+      if (idToken != null) {
+        await storage.write(
+            key: 'token', value: idToken); // FlutterSecureStorage
+        final box = GetStorage();
+        box.write('token', idToken); // GetStorage
+        print("🔐 Token Firebase disimpan: ${idToken.substring(0, 20)}...");
+      } else {
+        print("❌ Gagal ambil token Firebase");
+      }
+      user.value = _auth.currentUser;
 
       // Simpan data ke GetStorage
       final box = GetStorage();
@@ -210,6 +225,9 @@ class LoginController extends GetxController {
       print('🎯 SharedPreferences: $prefsMap');
       Get.snackbar("Sukses", "Login Google berhasil");
       Get.offAllNamed(Routes.HOME);
+      print("✅ Nama: ${googleUser.displayName}");
+      print("✅ Email: ${googleUser.email}");
+      print("✅ Token: ${idToken?.substring(0, 20)}");
     } catch (e) {
       Get.snackbar("Error", "Terjadi kesalahan saat login Google: $e");
     }

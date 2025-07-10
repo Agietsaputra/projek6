@@ -1,4 +1,4 @@
-import 'package:apa/app/modules/activity/controllers/activity_controller.dart';
+import 'package:apa/app/data/api_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,10 +9,16 @@ import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await GetStorage.init(); 
+  await GetStorage.init();
   await Firebase.initializeApp();
-   await initializeDateFormatting('id_ID', null);
-  Get.put(ActivityController());
+  await initializeDateFormatting('id_ID', null);
+  
+
+  // // ✅ Tambahkan ApiProvider
+  // Get.put(ApiProvider());
+
+  // // 🔍 (Opsional) Cek token di awal startup
+  // await Get.find<ApiProvider>().debugStorage();
 
   runApp(MyApp());
 }

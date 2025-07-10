@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,8 +8,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 class ApiProvider {
   final _storage = const FlutterSecureStorage();
   final String baseUrl = 'https://flask-smart.vercel.app';
+  final box = GetStorage();
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Konfigurasi Google Sign-In yang konsisten
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   Future<String?> readSecureStorage(String key) async {
     return await _storage.read(key: key);
@@ -93,31 +98,59 @@ class ApiProvider {
     }
   }
 
-  // Login dengan Google
+  // Login dengan Google - Langsung tanpa backend
   Future<Map<String, dynamic>> loginWithGoogle() async {
     try {
-      // 1. Login dengan Google Sign-In
-      final GoogleSignInAccount? googleUser =
-          await GoogleSignIn(scopes: ['email', 'profile']).signIn();
-      if (googleUser == null) throw 'Login Google dibatalkan';
+      print("🔄 Memulai login Google...");
 
-      // 2. Ambil auth credential
+      // 1. Pastikan sign out terlebih dahulu untuk menghindari konflik
+      await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
+
+      // 2. Login dengan Google Sign-In
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw 'Login Google dibatalkan';
+      }
+
+      print("✅ Google Sign-In berhasil: ${googleUser.email}");
+
+      // 3. Ambil auth credential
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        throw 'Gagal mendapatkan token dari Google';
+      }
+
+      print("✅ Token Google diperoleh");
+
+      // 4. Buat credential untuk Firebase
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 3. Login ke Firebase
+      // 5. Login ke Firebase
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       final firebaseUser = userCredential.user;
 
-      final idToken = await firebaseUser?.getIdToken();
-      if (idToken == null) throw 'Gagal mendapatkan ID Token Firebase';
+      if (firebaseUser == null) {
+        throw 'Gagal login ke Firebase';
+      }
 
-      // 4. Kirim token ke backend Flask
+      print("✅ Firebase login berhasil: ${firebaseUser.email}");
+
+      // 6. Ambil ID Token dari Firebase
+      final String? idToken = await firebaseUser.getIdToken();
+      if (idToken == null) {
+        throw 'Gagal mendapatkan ID Token Firebase';
+      }
+
+      print("✅ Firebase ID Token diperoleh");
+
+      // 7. Kirim token ke backend Flask
       final url = Uri.parse('$baseUrl/login/google');
       final response = await http.post(
         url,
@@ -126,28 +159,142 @@ class ApiProvider {
       );
 
       final body = _decodeResponse(response);
+      print("📡 Response dari backend: ${response.statusCode}");
 
       if (response.statusCode == 200 && body['token'] != null) {
-        // 5. Simpan token dari backend Flask
+        // 8. Simpan token dari backend Flask
         await _storage.write(key: 'token', value: body['token']);
 
-        // 6. Simpan data profil Google (dari Firebase user atau googleUser)
-        final name = firebaseUser?.displayName ??
-            googleUser.displayName ??
-            'Google User';
-        final email = firebaseUser?.email ?? googleUser.email;
-        final photo = firebaseUser?.photoURL ?? googleUser.photoUrl ?? '';
+        // 9. Simpan data profil
+        final name =
+            firebaseUser.displayName ?? googleUser.displayName ?? 'Google User';
+        final email = firebaseUser.email ?? googleUser.email;
+        final photo = firebaseUser.photoURL ?? googleUser.photoUrl ?? '';
 
         await _storage.write(key: 'user_name', value: name);
         await _storage.write(key: 'email', value: email);
         await _storage.write(key: 'picture', value: photo);
 
-        return body;
+        // 10. Simpan juga ke GetStorage untuk backup
+        await box.write('token', body['token']);
+        await box.write('user_name', name);
+        await box.write('email', email);
+        await box.write('picture', photo);
+
+        print("✅ Token dan data profil tersimpan");
+        print("🔑 Token: ${body['token'].substring(0, 20)}...");
+
+        return {
+          'success': true,
+          'message': 'Login Google berhasil',
+          'token': body['token'],
+          'user': {
+            'name': name,
+            'email': email,
+            'picture': photo,
+          }
+        };
       } else {
-        throw body['message'] ?? 'Login Google gagal';
+        throw body['message'] ?? 'Login Google gagal di backend';
       }
     } catch (e) {
       print("❌ Error loginWithGoogle: $e");
+
+      // Cleanup jika gagal
+      await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
+
+      rethrow;
+    }
+  }
+
+  // Login dengan Google - Tanpa backend (untuk development)
+  Future<Map<String, dynamic>> loginWithGoogleLocal() async {
+    
+    try {
+      print("🔄 Memulai login Google Local...");
+
+      // 1. Pastikan sign out terlebih dahulu
+
+      
+      await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
+      await debugStorage();
+
+      // 2. Login dengan Google Sign-In
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw 'Login Google dibatalkan';
+      }
+
+      print("✅ Google Sign-In berhasil: ${googleUser.email}");
+
+      // 3. Ambil auth credential
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        throw 'Gagal mendapatkan token dari Google';
+      }
+
+      // 4. Buat credential untuk Firebase
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // 5. Login ke Firebase
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+
+      if (firebaseUser == null) {
+        throw 'Gagal login ke Firebase';
+      }
+
+      // 6. Ambil ID Token dari Firebase sebagai token utama
+      final String? idToken = await firebaseUser.getIdToken();
+      if (idToken == null) {
+        throw 'Gagal mendapatkan ID Token Firebase';
+      }
+
+      // 7. Simpan token dan data profil
+      final name =
+          firebaseUser.displayName ?? googleUser.displayName ?? 'Google User';
+      final email = firebaseUser.email ?? googleUser.email;
+      final photo = firebaseUser.photoURL ?? googleUser.photoUrl ?? '';
+
+      await _storage.write(key: 'token', value: idToken);
+      await box.write('token', idToken);
+
+      await _storage.write(key: 'user_name', value: name);
+      await _storage.write(key: 'email', value: email);
+      await _storage.write(key: 'picture', value: photo);
+
+      await box.write('user_name', name);
+      await box.write('email', email);
+      await box.write('picture', photo);
+
+      print("✅ Token dan data profil tersimpan (Local)");
+      print("🔑 Token: ${idToken.substring(0, 20)}...");
+
+      return {
+        'success': true,
+        'message': 'Login Google berhasil (Local)',
+        'token': idToken,
+        'user': {
+          'name': name,
+          'email': email,
+          'picture': photo,
+        }
+      };
+    } catch (e) {
+      print("❌ Error loginWithGoogleLocal: $e");
+
+      // Cleanup jika gagal
+      await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
+
       rethrow;
     }
   }
@@ -219,7 +366,7 @@ class ApiProvider {
     }
   }
 
-// Kirim OTP untuk reset password
+  // Kirim OTP untuk reset password
   Future<Map<String, dynamic>> requestOtpReset(String email) async {
     final url = Uri.parse('$baseUrl/request-otp-reset');
     try {
@@ -241,7 +388,7 @@ class ApiProvider {
     }
   }
 
-// Verifikasi OTP reset password
+  // Verifikasi OTP reset password
   Future<Map<String, dynamic>> verifyOtpReset(String email, String otp) async {
     final url = Uri.parse('$baseUrl/verify-otp-reset');
     try {
@@ -262,86 +409,58 @@ class ApiProvider {
       rethrow;
     }
   }
-// Simpan riwayat lari per user (durasi dalam detik, jarak dalam kilometer)
-Future<void> simpanRiwayatLari({
+
+  // Simpan riwayat lari per user (durasi dalam detik, jarak dalam kilometer)
+  Future<void> simpanRiwayatLariLocal({
   required int durasi,
   required double jarak,
   required List<Map<String, double>> rute,
 }) async {
-  final token = await _storage.read(key: 'token');
-  if (token == null) throw 'Token tidak ditemukan';
+  final box = GetStorage();
+  final now = DateTime.now().toIso8601String();
 
-  final url = Uri.parse('$baseUrl/riwayat-lari');
-  final response = await http.post(
-    url,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    },
-    body: jsonEncode({
-      'durasi': durasi,
-      'jarak': jarak,
-      'rute': rute,
-    }),
-  );
+  final riwayat = {
+    'durasi': durasi,
+    'jarak': jarak,
+    'rute': rute,
+    'tanggal': now,
+  };
 
-  final body = _decodeResponse(response);
+  // Ambil riwayat yang sudah ada
+  final List existing = box.read('riwayat_lari') ?? [];
 
-  if (response.statusCode != 200) {
-    throw body['message'] ?? 'Gagal menyimpan riwayat lari';
-  }
+  // Tambahkan riwayat baru
+  existing.add(riwayat);
+
+  // Simpan ulang
+  await box.write('riwayat_lari', existing);
 }
 
-
-// Ambil riwayat lari user dari backend
-Future<List<Map<String, dynamic>>> getRiwayatLari() async {
-  final token = await _storage.read(key: 'token');
-  if (token == null) throw 'Token tidak ditemukan';
-
-  final url = Uri.parse('$baseUrl/riwayat-lari');
-  final response = await http.get(
-    url,
-    headers: {
-      'Authorization': 'Bearer $token',
-    },
-  );
-
-  final body = _decodeResponse(response);
-
-  if (response.statusCode == 200) {
-    final List<dynamic> data = body['riwayat_lari'] ?? [];
-    return data.map((e) => Map<String, dynamic>.from(e)).toList(); 
-  } else {
-    throw body['message'] ?? 'Gagal mengambil riwayat lari';
-  }
+  // Ambil riwayat lari user dari backend
+  Future<List<Map<String, dynamic>>> getRiwayatLariLocal() async {
+  final box = GetStorage();
+  final List raw = box.read('riwayat_lari') ?? [];
+  return raw.map((e) => Map<String, dynamic>.from(e)).toList();
 }
 
+  // Get profil user - Diperbaiki untuk cek token yang benar
+  Future<Map<String, dynamic>?> getProfile() async {
+    // Ambil data dari secure storage & GetStorage
+    final email = await _storage.read(key: 'email') ?? box.read('email');
+    final name = await _storage.read(key: 'user_name') ?? box.read('user_name');
+    final picture = await _storage.read(key: 'picture') ?? box.read('picture');
 
-
-  // Get profil user
-  Future<Map<String, dynamic>> getProfile() async {
-    final token = await _storage.read(key: 'token');
-    if (token == null) throw 'Token tidak ditemukan';
-
-    final url = Uri.parse('$baseUrl/profile');
-    final response = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    final body = _decodeResponse(response);
-
-    if (response.statusCode == 200) {
-      if (body['name'] != null) {
-        await _storage.write(key: 'user_name', value: body['name']);
-      }
-      if (body['email'] != null) {
-        await _storage.write(key: 'email', value: body['email']);
-      }
-      return body;
-    } else {
-      throw 'Gagal mengambil profil: ${response.statusCode}';
+    if (email == null || name == null) {
+      print("❌ Tidak ada profil tersimpan lokal");
+      return null;
     }
+
+    return {
+      'email': email,
+      'name': name,
+      'photo': picture,
+      'role': 'user',
+    };
   }
 
   // Update profil user
@@ -381,20 +500,26 @@ Future<List<Map<String, dynamic>>> getRiwayatLari() async {
     final body = _decodeResponse(response);
 
     if (response.statusCode == 200) {
+      // Update local storage
       if (name?.isNotEmpty == true) {
         await _storage.write(key: 'user_name', value: name!);
+        await box.write('user_name', name);
       }
       if (email?.isNotEmpty == true) {
         await _storage.write(key: 'email', value: email!);
+        await box.write('email', email);
       }
       if (phone?.isNotEmpty == true) {
         await _storage.write(key: 'phone', value: phone!);
+        await box.write('phone', phone);
       }
       if (username?.isNotEmpty == true) {
         await _storage.write(key: 'username', value: username!);
+        await box.write('username', username);
       }
       if (gender?.isNotEmpty == true) {
         await _storage.write(key: 'gender', value: gender!);
+        await box.write('gender', gender);
       }
       return body;
     } else {
@@ -422,17 +547,39 @@ Future<List<Map<String, dynamic>>> getRiwayatLari() async {
     }
   }
 
-  // Logout
+  // Logout - Diperbaiki untuk clear semua storage
   Future<void> clearToken() async {
     await _storage.deleteAll();
+    await box.erase();
   }
 
   Future<void> logout() async {
-    await clearToken();
+    try {
+      // Sign out dari Google dan Firebase
+      await _googleSignIn.signOut();
+      await FirebaseAuth.instance.signOut();
+
+      // Clear semua storage
+      await clearToken();
+
+      print("✅ Logout berhasil");
+    } catch (e) {
+      print("❌ Error logout: $e");
+      // Tetap clear storage meskipun ada error
+      await clearToken();
+    }
   }
 
   Future<String?> getToken() async {
-    return await _storage.read(key: 'token');
+    String? token = await _storage.read(key: 'token');
+    print("🔐 SecureStorage token: $token");
+
+    if (token == null) {
+      token = box.read('token');
+      print("📦 GetStorage token: $token");
+    }
+
+    return token;
   }
 
   // Refresh token
@@ -453,10 +600,20 @@ Future<List<Map<String, dynamic>>> getRiwayatLari() async {
 
     if (response.statusCode == 200 && body['token'] != null) {
       await _storage.write(key: 'token', value: body['token']);
+      await box.write('token', body['token']);
       return body;
     } else {
       throw body['message'] ?? 'Gagal refresh token';
     }
+  }
+
+  // Helper untuk debug storage
+  Future<void> debugStorage() async {
+    final secureToken = await _storage.read(key: 'token');
+    final boxToken = box.read('token');
+
+    print("🧪 Token dari SecureStorage: $secureToken");
+    print("📦 Token dari GetStorage: $boxToken");
   }
 
   // Helper

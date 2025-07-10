@@ -40,44 +40,47 @@ class HomeController extends GetxController {
   }
 
   void _loadUserData() async {
-    try {
-      final profile = await _apiProvider.getProfile();
-      if (profile.isNotEmpty) {
-        email.value = profile['email'] ?? '';
-        name.value = profile['name'] ?? '';
-        photoUrl.value = profile['photo'] ?? '';
-        box.write('userEmail', email.value);
-        box.write('name', name.value);
-        box.write('photo', photoUrl.value);
-        return;
-      }
-    } catch (e) {
-      print('⚠️ Gagal ambil dari API: $e');
+  try {
+    final profile = await _apiProvider.getProfile();
+    
+    // ✅ Tambahkan pengecekan null sebelum .isNotEmpty
+    if (profile != null && profile.isNotEmpty) {
+      email.value = profile['email'] ?? '';
+      name.value = profile['name'] ?? '';
+      photoUrl.value = profile['photo'] ?? '';
+      box.write('userEmail', email.value);
+      box.write('name', name.value);
+      box.write('photo', photoUrl.value);
+      return;
     }
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        email.value = user.email ?? '';
-        name.value = user.displayName ?? '';
-        photoUrl.value = user.photoURL ?? '';
-        box.write('userEmail', email.value);
-        box.write('name', name.value);
-        box.write('photo', photoUrl.value);
-        return;
-      }
-    } catch (e) {
-      print('⚠️ Gagal ambil dari Firebase: $e');
-    }
-
-    email.value = box.read('userEmail') ?? 'Tidak ada email';
-    name.value = box.read('name') ?? 'Pengguna';
-    photoUrl.value = box.read('photo') ?? '';
+  } catch (e) {
+    print('⚠️ Gagal ambil dari API: $e');
   }
 
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      email.value = user.email ?? '';
+      name.value = user.displayName ?? '';
+      photoUrl.value = user.photoURL ?? '';
+      box.write('userEmail', email.value);
+      box.write('name', name.value);
+      box.write('photo', photoUrl.value);
+      return;
+    }
+  } catch (e) {
+    print('⚠️ Gagal ambil dari Firebase: $e');
+  }
+
+  email.value = box.read('userEmail') ?? 'Tidak ada email';
+  name.value = box.read('name') ?? 'Pengguna';
+  photoUrl.value = box.read('photo') ?? '';
+}
+
+  
   Future<void> fetchRingkasanAktivitas() async {
     try {
-      final data = await _apiProvider.getRiwayatLari();
+      final data = await _apiProvider.getRiwayatLariLocal();
 
       final now = DateTime.now();
       final startOfWeek = now.subtract(Duration(days: now.weekday - 1));

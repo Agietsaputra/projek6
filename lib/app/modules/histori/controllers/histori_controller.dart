@@ -17,22 +17,21 @@ class HistoriController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Ambil data dari API
-      final data = await apiProvider.getRiwayatLari();
+      // Ambil dari local storage
+      final data = await apiProvider.getRiwayatLariLocal();
 
-      print("📦 Riwayat data mentah: $data");
+      print("📦 Riwayat data lokal: $data");
 
-      // Urutkan berdasarkan tanggal (format string / {"\$date": ...})
+      // Urutkan berdasarkan tanggal
       data.sort((a, b) {
-        final aDate = parseTanggal(a['tanggal']);
-        final bDate = parseTanggal(b['tanggal']);
-        return bDate.compareTo(aDate); // terbaru di atas
+        final aDate = DateTime.parse(a['tanggal']);
+        final bDate = DateTime.parse(b['tanggal']);
+        return bDate.compareTo(aDate);
       });
 
-      // Simpan ke variabel observable
       riwayatLari.assignAll(data);
     } catch (e) {
-      print("❌ Error fetchRiwayatLari: $e");
+      print("❌ Error fetchRiwayatLari lokal: $e");
       Get.snackbar(
         'Gagal Memuat Data',
         e.toString(),

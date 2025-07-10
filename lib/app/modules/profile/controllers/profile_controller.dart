@@ -70,45 +70,45 @@ class ProfileController extends GetxController {
   }
 
   void fetchProfile() async {
-    isLoading.value = true;
-    try {
-      final profile = await api.getProfile();
+  isLoading.value = true;
 
-      // Cek apakah profile null atau kosong
-      if (profile == null || profile.isEmpty) {
-        throw Exception('Data profil kosong');
-      }
+  try {
+    final email = await api.readSecureStorage('email') ?? box.read('email');
+    final name = await api.readSecureStorage('user_name') ?? box.read('user_name');
+    final photo = await api.readSecureStorage('picture') ?? box.read('picture');
 
-      // Jika valid, baru isi ke controller
-      emailController.text = profile['email'] ?? '';
-      nameController.text = profile['name'] ?? '';
-      phoneController.text = profile['phone'] ?? '';
-      usernameController.text = profile['username'] ?? '';
+    if (email != null) userEmail.value = email;
+    if (name != null) userName.value = name;
+    if (photo != null) userPhoto.value = photo;
 
-      userEmail.value = profile['email'] ?? userEmail.value;
-      userName.value = profile['name'] ?? userName.value;
-      userPhone.value = profile['phone'] ?? userPhone.value;
-      userUsername.value = profile['username'] ?? userUsername.value;
-      userRole.value = profile['role'] ?? userRole.value;
-      userGender.value = profile['gender'] ?? userGender.value;
+    emailController.text = userEmail.value;
+    nameController.text = userName.value;
+    // Karena tidak ada backend, data lainnya bisa dikosongkan
+    phoneController.text = '';
+    usernameController.text = '';
+    userPhone.value = '';
+    userUsername.value = '';
+    userRole.value = 'user';
+    userGender.value = '';
 
-      // Foto
-      if (profile['photo'] != null && profile['photo'].toString().isNotEmpty) {
-        userPhoto.value = profile['photo'];
-        box.write('userPhoto', profile['photo']);
-      } else {
-        if (userPhoto.value.isNotEmpty) {
-          box.write('userPhoto', userPhoto.value);
-        }
-      }
+    gender.value = userGender.value;
 
-      gender.value = userGender.value;
-    } catch (s) {
-      Get.snackbar('Sukses', 'oh wa klalen!');
-    } finally {
-      isLoading.value = false;
-    }
+    print("✅ Profile loaded dari local storage");
+  } catch (e) {
+    print("❌ Error fetchProfile lokal: $e");
+  } finally {
+    isLoading.value = false;
   }
+}
+
+  void debugToken() async {
+  final secureToken = await api.readSecureStorage('token');
+  final boxToken = box.read('token');
+
+  print("🔑 SecureStorage token: $secureToken");
+  print("📦 GetStorage token: $boxToken");
+}
+
 
   void updateProfile() async {
     final name = nameController.text.trim();

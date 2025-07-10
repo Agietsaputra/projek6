@@ -1,3 +1,4 @@
+import 'package:apa/app/modules/activity/controllers/activity_controller.dart';
 import 'package:get/get.dart';
 import 'package:apa/app/data/api_provider.dart';
 import '../controllers/home_controller.dart';

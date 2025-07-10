@@ -55,21 +55,32 @@ class ActivityController extends GetxController {
 
   void loadHistory() async {
     final rawData = _storage.read<List>(storageKey) ?? [];
-    final prefs = await SharedPreferences.getInstance();
-    final currentEmail = prefs.getString('email');
 
-    print('📨 Email aktif di SharedPreferences: $currentEmail');
-    print('📦 Semua history tersimpan di storage: $rawData');
+    // Gunakan key yang pasti ada
+    final boxEmail = _storage.read('email');
+    final prefs = await SharedPreferences.getInstance();
+    final sharedEmail = prefs.getString('email');
+
+    final currentEmail = boxEmail ?? sharedEmail;
+    print('📨 Email aktif yang digunakan filter: $currentEmail');
+
+    if (currentEmail == null) {
+      print(
+          "⚠️ Tidak ada email ditemukan di storage, tidak bisa filter history");
+      historyList.clear();
+      return;
+    }
 
     final data = rawData
         .map((item) => LoginHistory.fromJson(Map<String, dynamic>.from(item)))
         .where((history) => history.email == currentEmail)
         .toList();
 
-    print('🔍 Filtered history untuk email $currentEmail: ${data.length} item');
+    print('📦 Semua history tersimpan: ${rawData.length} item');
+    print('🔍 History yang cocok dengan email: ${data.length} item');
 
     historyList.assignAll(data.reversed.toList());
-    generateChartData(); // update chart setelah memuat data
+    generateChartData();
   }
 
   void addHistory(LoginHistory history) {

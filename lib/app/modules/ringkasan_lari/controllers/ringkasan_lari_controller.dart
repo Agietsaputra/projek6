@@ -41,7 +41,7 @@ class RingkasanLariController extends GetxController {
         'longitude': e.longitude,
       }).toList();
 
-      await apiProvider.simpanRiwayatLari(
+      await apiProvider.simpanRiwayatLariLocal(
         durasi: durasi,
         jarak: jarak,
         rute: ruteList,

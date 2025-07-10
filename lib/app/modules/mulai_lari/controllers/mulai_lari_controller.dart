@@ -99,7 +99,7 @@ class MulaiLariController extends GetxController {
     try {
       // ✅ Kirim ke backend
       final api = ApiProvider();
-      await api.simpanRiwayatLari(
+      await api.simpanRiwayatLariLocal(
         durasi: durasi,
         jarak: jarakKm,
         rute: serializedRoute,
