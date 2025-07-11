@@ -548,10 +548,10 @@ class ApiProvider {
   }
 
   // Logout - Diperbaiki untuk clear semua storage
-  Future<void> clearToken() async {
-    await _storage.deleteAll();
-    await box.erase();
-  }
+  // Future<void> clearToken() async {
+  //   await _storage.deleteAll();
+  //   await box.erase();
+  // }
 
   Future<void> logout() async {
     try {
@@ -560,13 +560,13 @@ class ApiProvider {
       await FirebaseAuth.instance.signOut();
 
       // Clear semua storage
-      await clearToken();
+      // await clearToken();
 
       print("✅ Logout berhasil");
     } catch (e) {
       print("❌ Error logout: $e");
       // Tetap clear storage meskipun ada error
-      await clearToken();
+      // await clearToken();
     }
   }
 

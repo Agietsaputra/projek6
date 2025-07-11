@@ -45,7 +45,6 @@ class ActivityController extends GetxController {
   final RxList<ChartData> chartData = <ChartData>[].obs;
 
   final GetStorage _storage = GetStorage();
-  final String storageKey = 'login_history';
 
   @override
   void onInit() {
@@ -54,40 +53,38 @@ class ActivityController extends GetxController {
   }
 
   void loadHistory() async {
-    final rawData = _storage.read<List>(storageKey) ?? [];
-
-    // Gunakan key yang pasti ada
+    // Ambil email user yang sedang login
     final boxEmail = _storage.read('email');
     final prefs = await SharedPreferences.getInstance();
     final sharedEmail = prefs.getString('email');
 
     final currentEmail = boxEmail ?? sharedEmail;
-    print('📨 Email aktif yang digunakan filter: $currentEmail');
+    print('📨 Email aktif untuk filter: $currentEmail');
 
     if (currentEmail == null) {
-      print(
-          "⚠️ Tidak ada email ditemukan di storage, tidak bisa filter history");
+      print("⚠️ Tidak ada email ditemukan di storage, tidak bisa filter history");
       historyList.clear();
       return;
     }
 
+    final key = 'login_history_$currentEmail';
+    final rawData = _storage.read<List>(key) ?? [];
+
     final data = rawData
         .map((item) => LoginHistory.fromJson(Map<String, dynamic>.from(item)))
-        .where((history) => history.email == currentEmail)
         .toList();
 
-    print('📦 Semua history tersimpan: ${rawData.length} item');
-    print('🔍 History yang cocok dengan email: ${data.length} item');
-
+    print('📦 History total untuk $currentEmail: ${data.length} item');
     historyList.assignAll(data.reversed.toList());
     generateChartData();
   }
 
   void addHistory(LoginHistory history) {
-    final currentList = _storage.read<List>(storageKey) ?? [];
+    final key = 'login_history_${history.email}';
+    final currentList = _storage.read<List>(key) ?? [];
     currentList.add(history.toJson());
-    _storage.write(storageKey, currentList);
-    loadHistory(); // untuk memuat ulang dan filter berdasarkan email
+    _storage.write(key, currentList);
+    loadHistory(); // reload untuk user aktif
   }
 
   void generateChartData() {
@@ -102,5 +99,13 @@ class ActivityController extends GetxController {
         .map((e) => ChartData(DateTime.parse(e.key), e.value))
         .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
+  }
+
+  // Optional: hapus history user tertentu
+  void clearHistoryForUser(String email) {
+    final key = 'login_history_$email';
+    _storage.remove(key);
+    historyList.clear();
+    chartData.clear();
   }
 }

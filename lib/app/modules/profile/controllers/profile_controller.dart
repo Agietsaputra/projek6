@@ -70,45 +70,46 @@ class ProfileController extends GetxController {
   }
 
   void fetchProfile() async {
-  isLoading.value = true;
+    isLoading.value = true;
 
-  try {
-    final email = await api.readSecureStorage('email') ?? box.read('email');
-    final name = await api.readSecureStorage('user_name') ?? box.read('user_name');
-    final photo = await api.readSecureStorage('picture') ?? box.read('picture');
+    try {
+      final email = await api.readSecureStorage('email') ?? box.read('email');
+      final name =
+          await api.readSecureStorage('user_name') ?? box.read('user_name');
+      final photo =
+          await api.readSecureStorage('picture') ?? box.read('picture');
 
-    if (email != null) userEmail.value = email;
-    if (name != null) userName.value = name;
-    if (photo != null) userPhoto.value = photo;
+      if (email != null) userEmail.value = email;
+      if (name != null) userName.value = name;
+      if (photo != null) userPhoto.value = photo;
 
-    emailController.text = userEmail.value;
-    nameController.text = userName.value;
-    // Karena tidak ada backend, data lainnya bisa dikosongkan
-    phoneController.text = '';
-    usernameController.text = '';
-    userPhone.value = '';
-    userUsername.value = '';
-    userRole.value = 'user';
-    userGender.value = '';
+      emailController.text = userEmail.value;
+      nameController.text = userName.value;
+      // Karena tidak ada backend, data lainnya bisa dikosongkan
+      phoneController.text = '';
+      usernameController.text = '';
+      userPhone.value = '';
+      userUsername.value = '';
+      userRole.value = 'user';
+      userGender.value = '';
 
-    gender.value = userGender.value;
+      gender.value = userGender.value;
 
-    print("✅ Profile loaded dari local storage");
-  } catch (e) {
-    print("❌ Error fetchProfile lokal: $e");
-  } finally {
-    isLoading.value = false;
+      print("✅ Profile loaded dari local storage");
+    } catch (e) {
+      print("❌ Error fetchProfile lokal: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
-}
 
   void debugToken() async {
-  final secureToken = await api.readSecureStorage('token');
-  final boxToken = box.read('token');
+    final secureToken = await api.readSecureStorage('token');
+    final boxToken = box.read('token');
 
-  print("🔑 SecureStorage token: $secureToken");
-  print("📦 GetStorage token: $boxToken");
-}
-
+    print("🔑 SecureStorage token: $secureToken");
+    print("📦 GetStorage token: $boxToken");
+  }
 
   void updateProfile() async {
     final name = nameController.text.trim();
@@ -173,7 +174,10 @@ class ProfileController extends GetxController {
     isLoading.value = true;
     try {
       await api.logout();
-      await box.erase();
+      await box.remove('email');
+      await box.remove('token');
+      await box.remove('name');
+      await box.remove('provider');
       Get.offAllNamed(Routes.LOGIN);
     } catch (e) {
       Get.snackbar('Error', 'Gagal logout: $e');
