@@ -4,153 +4,161 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../controllers/mulai_lari_controller.dart';
 
-class MulaiLariView extends GetView<MulaiLariController> {
-  const MulaiLariView({Key? key}) : super(key: key);
-
-  String formatDuration(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return "$m:$s";
-  }
+class MulaiLariView extends StatelessWidget {
+  const MulaiLariView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<MulaiLariController>();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
-        title: const Text("Mulai Lari"),
         backgroundColor: const Color(0xFF1A1A3F),
         foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
+        title: const Text("Mulai Lari"),
+        centerTitle: true,
       ),
       body: Obx(() {
-        if (controller.currentLocation.value == null &&
-            controller.routePoints.isEmpty) {
+        final lokasi = controller.currentLocation.value;
+        if (lokasi == null) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return Column(
+        return Stack(
           children: [
-            // === MAP ===
-            Expanded(
-              child: Stack(
-                children: [
-                  FlutterMap(
-                    mapController: controller.mapController,
-                    options: MapOptions(
-                      initialCenter: controller.routePoints.isNotEmpty
-                          ? controller.routePoints.last
-                          : controller.currentLocation.value!,
-                      initialZoom: 16.0,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        subdomains: const ['a', 'b', 'c'],
-                        userAgentPackageName: 'com.example.app',
-                      ),
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: controller.routePoints,
-                            strokeWidth: 4.0,
-                            color: Colors.cyan,
-                          ),
-                        ],
-                      ),
-                      MarkerLayer(
-                        markers: controller.routePoints.isNotEmpty
-                            ? [
-                                Marker(
-                                  point: controller.routePoints.last,
-                                  width: 60,
-                                  height: 60,
-                                  child: Transform.rotate(
-                                    angle: controller.heading.value * (3.14 / 180),
-                                    child: const Icon(
-                                      Icons.navigation,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                  ),
-                                ),
-                              ]
-                            : [],
-                      ),
-                    ],
-                  ),
+            FlutterMap(
+              mapController: controller.mapController,
+              options: MapOptions(
+                initialCenter: lokasi,
+                initialZoom: 16.0,
+              ),
+              children: [
+                // ✅ MapTiler Tile
+                TileLayer(
+                  urlTemplate:
+                      "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=vFDGKJX4ek3RBLCsaljd",
+                  userAgentPackageName: 'com.example.apa',
+                ),
 
-                  // === Recenter Button ===
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: FloatingActionButton(
-                      heroTag: "recenter",
-                      onPressed: () {
-                        final current = controller.routePoints.isNotEmpty
-                            ? controller.routePoints.last
-                            : controller.currentLocation.value;
-                        if (current != null) {
-                          controller.mapController.move(current, 16.0);
-                        }
-                      },
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF1A1A3F),
-                      child: const Icon(Icons.my_location),
-                    ),
-                  ),
-                ],
+                // ✅ Real-time Polyline
+                Obx(() => PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: controller.routePoints,
+                          strokeWidth: 4.0,
+                          color: Colors.blueAccent,
+                        ),
+                      ],
+                    )),
+
+                // ✅ Marker posisi user
+                Obx(() => MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: controller.currentLocation.value!,
+                          width: 40,
+                          height: 40,
+                          child: const Icon(
+                            Icons.person_pin_circle,
+                            color: Colors.red,
+                            size: 40,
+                          ),
+                        )
+                      ],
+                    )),
+              ],
+            ),
+
+            // ✅ Durasi dan Jarak
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Obx(() => Text(
+                          "⏱️ ${_formatWaktu(controller.elapsedSeconds.value)}",
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        )),
+                    Obx(() => Text(
+                          "📏 ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} KM",
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        )),
+                  ],
+                ),
               ),
             ),
 
-            // === INFO & BUTTON ===
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            // ✅ Tombol Pusatkan ke Lokasi
+            Positioned(
+              top: 100,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: "center_button",
+                backgroundColor: Colors.white,
+                onPressed: () {
+                  final current = controller.currentLocation.value;
+                  if (current != null) {
+                    controller.mapController.move(current, 16.0);
+                  }
+                },
+                child: const Icon(Icons.my_location, color: Colors.black),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    "Durasi: ${formatDuration(controller.elapsedSeconds.value)}",
-                    style: const TextStyle(fontSize: 18, color: Color(0xFF1A1A3F)),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Jarak: ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} km",
-                    style: const TextStyle(fontSize: 18, color: Color(0xFF1A1A3F)),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: Icon(controller.isRunning.value
-                          ? Icons.stop
-                          : Icons.play_arrow),
-                      label: Text(controller.isRunning.value
-                          ? "Selesai Lari"
-                          : "Mulai Lari"),
-                      onPressed: controller.isRunning.value
-                          ? controller.stopRun
-                          : controller.startRun,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A1A3F),
-                        foregroundColor: const Color(0xFF72DEC2),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(fontSize: 16),
-                      ),
+            ),
+
+            // ✅ Tombol Mulai / Selesai
+            Positioned(
+              bottom: 30,
+              left: 20,
+              right: 20,
+              child: Obx(() => ElevatedButton.icon(
+                    icon: Icon(controller.isRunning.value
+                        ? Icons.stop
+                        : Icons.play_arrow),
+                    label: Text(controller.isRunning.value
+                        ? "Selesai Lari"
+                        : "Mulai Lari"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: controller.isRunning.value
+                          ? Colors.red
+                          : const Color(0xFF1A1A3F),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
-                  ),
-                ],
-              ),
+                    onPressed: () {
+                      if (controller.isRunning.value) {
+                        controller.stopRun();
+                      } else {
+                        controller.startRun();
+                      }
+                    },
+                  )),
             ),
           ],
         );
       }),
     );
+  }
+
+  /// ✅ Format HH:mm:ss dari total detik
+  String _formatWaktu(int detik) {
+    final durasi = Duration(seconds: detik);
+    String duaDigit(int n) => n.toString().padLeft(2, '0');
+    final jam = duaDigit(durasi.inHours);
+    final menit = duaDigit(durasi.inMinutes.remainder(60));
+    final sisaDetik = duaDigit(durasi.inSeconds.remainder(60));
+    return '$jam:$menit:$sisaDetik';
   }
 }

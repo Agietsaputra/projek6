@@ -31,6 +31,8 @@ class HomeController extends GetxController {
   var chartData = <String, double>{}.obs;
   final articles = <Article>[].obs;
 
+  bool get sudahLariHariIni => lastRun.value != null;
+
   @override
   void onInit() {
     super.onInit();
@@ -40,68 +42,76 @@ class HomeController extends GetxController {
   }
 
   void _loadUserData() async {
-  try {
-    final profile = await _apiProvider.getProfile();
-    
-    // ✅ Tambahkan pengecekan null sebelum .isNotEmpty
-    if (profile != null && profile.isNotEmpty) {
-      email.value = profile['email'] ?? '';
-      name.value = profile['name'] ?? '';
-      photoUrl.value = profile['photo'] ?? '';
-      box.write('userEmail', email.value);
-      box.write('name', name.value);
-      box.write('photo', photoUrl.value);
-      return;
+    try {
+      final profile = await _apiProvider.getProfile();
+      if (profile != null && profile.isNotEmpty) {
+        email.value = profile['email'] ?? '';
+        name.value = profile['name'] ?? '';
+        photoUrl.value = profile['photo'] ?? '';
+        box.write('userEmail', email.value);
+        box.write('name', name.value);
+        box.write('photo', photoUrl.value);
+        return;
+      }
+    } catch (e) {
+      print('⚠️ Gagal ambil dari API: $e');
     }
-  } catch (e) {
-    print('⚠️ Gagal ambil dari API: $e');
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        email.value = user.email ?? '';
+        name.value = user.displayName ?? '';
+        photoUrl.value = user.photoURL ?? '';
+        box.write('userEmail', email.value);
+        box.write('name', name.value);
+        box.write('photo', photoUrl.value);
+        return;
+      }
+    } catch (e) {
+      print('⚠️ Gagal ambil dari Firebase: $e');
+    }
+
+    // Fallback dari GetStorage
+    email.value = box.read('userEmail') ?? 'Tidak ada email';
+    name.value = box.read('name') ?? 'Pengguna';
+    photoUrl.value = box.read('photo') ?? '';
   }
 
-  try {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      email.value = user.email ?? '';
-      name.value = user.displayName ?? '';
-      photoUrl.value = user.photoURL ?? '';
-      box.write('userEmail', email.value);
-      box.write('name', name.value);
-      box.write('photo', photoUrl.value);
-      return;
-    }
-  } catch (e) {
-    print('⚠️ Gagal ambil dari Firebase: $e');
-  }
-
-  email.value = box.read('userEmail') ?? 'Tidak ada email';
-  name.value = box.read('name') ?? 'Pengguna';
-  photoUrl.value = box.read('photo') ?? '';
-}
-
-  
   Future<void> fetchRingkasanAktivitas() async {
     try {
       final data = await _apiProvider.getRiwayatLariLocal();
 
       final now = DateTime.now();
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final startOfWeek =
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+      final today = DateTime(now.year, now.month, now.day);
 
-      // 🔍 Ambil data lari hari ini
+      // 🔍 Ambil data hari ini
       final todayRuns = data.where((e) {
-        final dateStr = e['tanggal']?.toString() ?? '';
-        final date = DateTime.tryParse(dateStr);
-        return date != null &&
-            date.year == now.year &&
-            date.month == now.month &&
-            date.day == now.day;
+        final raw = e['tanggal']?.toString() ?? '';
+        final date = DateTime.tryParse(raw);
+        if (date == null) return false;
+        final onlyDate = DateTime(date.year, date.month, date.day);
+        return onlyDate == today;
       }).toList();
 
-      lastRun.value = todayRuns.isNotEmpty ? todayRuns.last : null;
+      if (todayRuns.isNotEmpty) {
+        todayRuns.sort((a, b) {
+          final aDate = DateTime.tryParse(a['tanggal'].toString()) ?? DateTime(1970);
+          final bDate = DateTime.tryParse(b['tanggal'].toString()) ?? DateTime(1970);
+          return bDate.compareTo(aDate);
+        });
+        lastRun.value = todayRuns.first;
+      } else {
+        lastRun.value = null;
+      }
 
       // 📊 Total jarak minggu ini
       final total = data.where((e) {
-        final dateStr = e['tanggal']?.toString() ?? '';
-        final date = DateTime.tryParse(dateStr);
-        return date != null && date.isAfter(startOfWeek);
+        final raw = e['tanggal']?.toString() ?? '';
+        final date = DateTime.tryParse(raw);
+        return date != null && !date.isBefore(startOfWeek);
       }).fold<double>(0.0, (sum, e) {
         final jarak = (e['jarak'] is num) ? (e['jarak'] as num).toDouble() : 0.0;
         return sum + jarak;
@@ -109,16 +119,21 @@ class HomeController extends GetxController {
 
       totalDistanceThisWeek.value = total;
 
-      // 📈 Data grafik per hari
+      // 📈 Grafik harian minggu ini
       final tempData = {
-        'Sen': 0.0, 'Sel': 0.0, 'Rab': 0.0,
-        'Kam': 0.0, 'Jum': 0.0, 'Sab': 0.0, 'Min': 0.0
+        'Sen': 0.0,
+        'Sel': 0.0,
+        'Rab': 0.0,
+        'Kam': 0.0,
+        'Jum': 0.0,
+        'Sab': 0.0,
+        'Min': 0.0,
       };
 
       for (var e in data) {
-        final dateStr = e['tanggal']?.toString() ?? '';
-        final date = DateTime.tryParse(dateStr);
-        if (date != null && date.isAfter(startOfWeek)) {
+        final raw = e['tanggal']?.toString() ?? '';
+        final date = DateTime.tryParse(raw);
+        if (date != null && !date.isBefore(startOfWeek)) {
           final hari = _hariSingkat(date.weekday);
           final jarak = (e['jarak'] is num) ? (e['jarak'] as num).toDouble() : 0.0;
           tempData[hari] = tempData[hari]! + jarak;
@@ -188,7 +203,11 @@ class HomeController extends GetxController {
     try {
       return DateFormat("EEEE, dd MMM yyyy HH:mm 'WIB'", 'id_ID').parse(tanggalStr);
     } catch (_) {
-      return DateTime.now();
+      try {
+        return DateFormat("dd MMM yyyy", 'id_ID').parse(tanggalStr);
+      } catch (_) {
+        return DateTime(1970);
+      }
     }
   }
 }

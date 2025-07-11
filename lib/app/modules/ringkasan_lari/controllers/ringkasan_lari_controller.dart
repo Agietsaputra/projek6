@@ -37,9 +37,9 @@ class RingkasanLariController extends GetxController {
   Future<void> simpanRiwayat() async {
     try {
       final ruteList = route.map((e) => {
-        'latitude': e.latitude,
-        'longitude': e.longitude,
-      }).toList();
+            'latitude': e.latitude,
+            'longitude': e.longitude,
+          }).toList();
 
       await apiProvider.simpanRiwayatLariLocal(
         durasi: durasi,
@@ -54,11 +54,16 @@ class RingkasanLariController extends GetxController {
     }
   }
 
+  /// ✅ Format waktu HH:mm:ss
   String get formattedDuration {
-    final m = (durasi ~/ 60).toString().padLeft(2, '0');
-    final s = (durasi % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+    final duration = Duration(seconds: durasi);
+    String duaDigit(int n) => n.toString().padLeft(2, '0');
+    final jam = duaDigit(duration.inHours);
+    final menit = duaDigit(duration.inMinutes.remainder(60));
+    final detik = duaDigit(duration.inSeconds.remainder(60));
+    return '$jam:$menit:$detik';
   }
 
+  /// ✅ Format jarak 2 digit desimal
   String get formattedDistance => '${jarak.toStringAsFixed(2)} km';
 }

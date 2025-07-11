@@ -17,19 +17,31 @@ class HistoriController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Ambil dari local storage
       final data = await apiProvider.getRiwayatLariLocal();
+      print("📦 Riwayat data lokal: ${data.length}");
 
-      print("📦 Riwayat data lokal: $data");
+      final Map<String, Map<String, dynamic>> uniqueByDate = {};
 
-      // Urutkan berdasarkan tanggal
-      data.sort((a, b) {
-        final aDate = DateTime.parse(a['tanggal']);
-        final bDate = DateTime.parse(b['tanggal']);
+      for (var item in data) {
+        if (item.containsKey('tanggal')) {
+          final tanggalKey = parseTanggal(item['tanggal'])
+              .toIso8601String()
+              .substring(0, 10); // yyyy-MM-dd
+
+          if (!uniqueByDate.containsKey(tanggalKey)) {
+            uniqueByDate[tanggalKey] = item;
+          }
+        }
+      }
+
+      final uniqueList = uniqueByDate.values.toList();
+      uniqueList.sort((a, b) {
+        final aDate = parseTanggal(a['tanggal']);
+        final bDate = parseTanggal(b['tanggal']);
         return bDate.compareTo(aDate);
       });
 
-      riwayatLari.assignAll(data);
+      riwayatLari.assignAll(uniqueList);
     } catch (e) {
       print("❌ Error fetchRiwayatLari lokal: $e");
       Get.snackbar(
@@ -45,10 +57,20 @@ class HistoriController extends GetxController {
 
   DateTime parseTanggal(dynamic raw) {
     if (raw is String) {
-      return DateTime.tryParse(raw) ?? DateTime(1970);
+      return DateTime.tryParse(raw)?.toLocal() ?? DateTime(1970);
     } else if (raw is Map && raw.containsKey("\$date")) {
-      return DateTime.tryParse(raw["\$date"]) ?? DateTime(1970);
+      return DateTime.tryParse(raw["\$date"])?.toLocal() ?? DateTime(1970);
     }
     return DateTime(1970);
+  }
+
+  /// ✅ Format durasi detik ke HH:mm:ss
+  String formatDurasi(int durasiDetik) {
+    final durasi = Duration(seconds: durasiDetik);
+    String duaDigit(int n) => n.toString().padLeft(2, '0');
+    final jam = duaDigit(durasi.inHours);
+    final menit = duaDigit(durasi.inMinutes.remainder(60));
+    final detik = duaDigit(durasi.inSeconds.remainder(60));
+    return '$jam:$menit:$detik';
   }
 }

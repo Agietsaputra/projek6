@@ -4,8 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'dart:async';
-
-import 'package:apa/app/data/api_provider.dart'; // ✅ Sesuaikan dengan path project kamu
+import 'package:apa/app/data/api_provider.dart';
 
 class MulaiLariController extends GetxController {
   RxList<LatLng> routePoints = <LatLng>[].obs;
@@ -22,15 +21,26 @@ class MulaiLariController extends GetxController {
   final distance = const Distance();
   late MapController mapController;
 
+  /// ✅ Fungsi waktu terformat HH:mm:ss
+  String get formattedElapsedTime {
+    final durasi = Duration(seconds: elapsedSeconds.value);
+    String duaDigit(int n) => n.toString().padLeft(2, '0');
+    final jam = duaDigit(durasi.inHours);
+    final menit = duaDigit(durasi.inMinutes.remainder(60));
+    final detik = duaDigit(durasi.inSeconds.remainder(60));
+    return '$jam:$menit:$detik';
+  }
+
   @override
   void onInit() {
     super.onInit();
     mapController = MapController();
-    getCurrentLocation(); // Ambil posisi awal saat init
+    getCurrentLocation();
   }
 
   Future<void> getCurrentLocation() async {
     try {
+      await _checkPermission();
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best,
       );
@@ -43,14 +53,15 @@ class MulaiLariController extends GetxController {
   void startRun() async {
     try {
       await _checkPermission();
-
       isRunning.value = true;
       elapsedSeconds.value = 0;
       routePoints.clear();
       totalDistance.value = 0.0;
 
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        elapsedSeconds.value++;
+        if (isRunning.value) {
+          elapsedSeconds.value++;
+        }
       });
 
       positionStream = Geolocator.getPositionStream(
@@ -67,9 +78,10 @@ class MulaiLariController extends GetxController {
 
         routePoints.add(point);
         heading.value = position.heading;
+        currentLocation.value = point;
 
         if (isRunning.value) {
-          mapController.move(point, 16.0); // follow user
+          mapController.move(point, 16.0);
         }
       });
     } catch (e) {
@@ -97,7 +109,6 @@ class MulaiLariController extends GetxController {
     final jarakKm = totalDistance.value / 1000;
 
     try {
-      // ✅ Kirim ke backend
       final api = ApiProvider();
       await api.simpanRiwayatLariLocal(
         durasi: durasi,
@@ -105,13 +116,15 @@ class MulaiLariController extends GetxController {
         rute: serializedRoute,
       );
     } catch (e) {
-      Get.snackbar("Gagal Simpan Riwayat", "$e",
-          backgroundColor: Colors.red[100],
-          colorText: Colors.red[900],
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+        "Gagal Simpan Riwayat",
+        "$e",
+        backgroundColor: Colors.red[100],
+        colorText: Colors.red[900],
+        snackPosition: SnackPosition.TOP,
+      );
     }
 
-    // ✅ Navigasi ke ringkasan
     Get.toNamed('/ringkasan-lari', arguments: {
       'durasi': durasi,
       'jarak': jarakKm,
@@ -119,51 +132,34 @@ class MulaiLariController extends GetxController {
     });
   }
 
+  void centerToCurrentLocation() {
+    final loc = currentLocation.value;
+    if (loc != null) {
+      mapController.move(loc, 16.0);
+    } else {
+      Get.snackbar("Lokasi Belum Tersedia", "Tunggu hingga lokasi diperoleh.");
+    }
+  }
+
   Future<void> _checkPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       await Geolocator.openLocationSettings();
-      throw 'Layanan lokasi tidak aktif. Silakan aktifkan GPS.';
+      throw 'GPS tidak aktif. Aktifkan terlebih dahulu.';
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      await Get.defaultDialog(
-        title: "Izin Lokasi Dibutuhkan",
-        middleText:
-            "Aplikasi ini memerlukan akses lokasi untuk melacak rute lari kamu secara real-time.",
-        confirm: ElevatedButton(
-          onPressed: () async {
-            Get.back();
-            final result = await Geolocator.requestPermission();
-            if (result == LocationPermission.denied ||
-                result == LocationPermission.deniedForever) {
-              throw 'Izin lokasi ditolak.';
-            }
-          },
-          child: const Text("Izinkan"),
-        ),
-        cancel: TextButton(
-          onPressed: () => Get.back(),
-          child: const Text("Batal"),
-        ),
-      );
+      final result = await Geolocator.requestPermission();
+      if (result == LocationPermission.denied ||
+          result == LocationPermission.deniedForever) {
+        throw 'Izin lokasi ditolak.';
+      }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      await Get.defaultDialog(
-        title: "Izin Lokasi Ditolak Permanen",
-        middleText:
-            "Silakan aktifkan izin lokasi secara manual di pengaturan aplikasi agar fitur pelacakan bisa digunakan.",
-        confirm: ElevatedButton(
-          onPressed: () {
-            Geolocator.openAppSettings();
-            Get.back();
-          },
-          child: const Text("Buka Pengaturan"),
-        ),
-      );
-      throw 'Izin lokasi ditolak permanen.';
+      await Geolocator.openAppSettings();
+      throw 'Izin lokasi ditolak permanen. Aktifkan dari pengaturan.';
     }
   }
 

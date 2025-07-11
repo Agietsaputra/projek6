@@ -10,16 +10,31 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
   @override
   Widget build(BuildContext context) {
     final route = controller.route;
-    final startPoint = route.isNotEmpty ? route.first : const LatLng(-6.200000, 106.816666); // Default ke Jakarta
+    final startPoint = route.isNotEmpty
+        ? route.first
+        : const LatLng(-6.200000, 106.816666); // Default ke Jakarta
+
+    final endPoint = route.length > 1 ? route.last : null;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
-        title: const Text('Ringkasan Lari'),
+        title: const Text(
+          'Ringkasan Lari',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF72DEC2),
+          ),
+        ),
+        centerTitle: true,
         backgroundColor: const Color(0xFF1A1A3F),
-        foregroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: Column(
         children: [
+          // ✅ Peta dengan rute lari
           Expanded(
             flex: 2,
             child: FlutterMap(
@@ -28,67 +43,104 @@ class RingkasanLariView extends GetView<RingkasanLariController> {
                 initialZoom: 16,
               ),
               children: [
+                // ✅ Gunakan MapTiler agar tile tidak error
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.app',
+                  urlTemplate:
+                      'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=vFDGKJX4ek3RBLCsaljd',
+                  userAgentPackageName: 'com.example.apa',
                 ),
+                // ✅ Tambahkan garis rute jika lebih dari 1 titik
                 if (route.length > 1)
                   PolylineLayer(
                     polylines: [
                       Polyline(
                         points: route,
-                        color: Colors.blue,
+                        color: const Color(0xFF72DEC2),
                         strokeWidth: 4.0,
                       ),
                     ],
                   ),
+                // ✅ Marker titik awal dan akhir
                 MarkerLayer(
                   markers: [
                     Marker(
                       point: startPoint,
                       width: 40,
                       height: 40,
-                      child: const Icon(Icons.directions_run, color: Colors.green, size: 32),
+                      child: const Icon(Icons.directions_run,
+                          color: Colors.green, size: 32),
                     ),
-                    if (route.length > 1)
+                    if (endPoint != null)
                       Marker(
-                        point: route.last,
+                        point: endPoint,
                         width: 40,
                         height: 40,
-                        child: const Icon(Icons.flag, color: Colors.red, size: 32),
+                        child: const Icon(Icons.flag,
+                            color: Colors.red, size: 32),
                       ),
                   ],
                 ),
               ],
             ),
           ),
+
+          // ✅ Informasi durasi dan jarak
           Expanded(
             flex: 1,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F5),
+                color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, -4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Durasi: ${controller.formattedDuration}', style: const TextStyle(fontSize: 20)),
+                  Text(
+                    'Durasi: ${controller.formattedDuration}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A3F),
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Jarak: ${controller.formattedDistance}', style: const TextStyle(fontSize: 20)),
+                  Text(
+                    'Jarak: ${controller.formattedDistance}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1A1A3F),
+                    ),
+                  ),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () => Get.offAllNamed('/home'),
                       icon: const Icon(Icons.home),
-                      label: const Text('Kembali ke Beranda'),
+                      label: const Text(
+                        'Kembali ke Beranda',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF72DEC2),
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
                         backgroundColor: const Color(0xFF1A1A3F),
-                        foregroundColor: Colors.white,
-                        textStyle: const TextStyle(fontSize: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                     ),
                   ),

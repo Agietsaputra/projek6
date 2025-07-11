@@ -1,4 +1,3 @@
-// ... import tetap sama
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:apa/app/modules/home/controllers/home_controller.dart';
 
 class HomeView extends StatelessWidget {
+  const HomeView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
@@ -33,33 +34,25 @@ class HomeView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Halo, $name 👋",
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
-                  ),
+                  Text("Halo, $name 👋",
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F))),
                   const SizedBox(height: 8),
-                  const Text(
-                    "Sudah siap untuk stretching & lari hari ini?",
-                    style: TextStyle(fontSize: 16, color: Colors.black87),
-                  ),
+                  const Text("Sudah siap untuk stretching & lari hari ini?",
+                      style: TextStyle(fontSize: 16, color: Colors.black87)),
                   const SizedBox(height: 24),
-                  const Text(
-                    "📊 Ringkasan Aktivitas",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
-                  ),
+                  const Text("📊 Ringkasan Aktivitas",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F))),
                   const SizedBox(height: 12),
-                  summaryRow(
-                    "Lari Terakhir",
-                    lastRun != null
-                        ? "🕒 ${lastRun['durasi']?.toString() ?? '0'} menit - ${(lastRun['jarak'] ?? 0.0).toStringAsFixed(2)} KM"
-                        : "Belum ada",
-                  ),
+                  summaryRow("Lari Terakhir", lastRun != null
+                      ? "🕒 ${formatDurasi(lastRun['durasi'])} - ${(lastRun['jarak'] ?? 0.0).toStringAsFixed(2)} KM"
+                      : "🚫 Belum ada lari hari ini"),
                   summaryRow("Total Minggu Ini", "🏃‍♂️ ${totalKm.toStringAsFixed(2)} KM"),
                   const SizedBox(height: 24),
-                  const Text(
-                    "📈 Grafik Mingguan",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
-                  ),
+
+                  // Grafik
+                  const Text("📈 Grafik Mingguan",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F))),
                   const SizedBox(height: 12),
                   Container(
                     height: 200,
@@ -95,7 +88,7 @@ class HomeView extends StatelessWidget {
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                getTitlesWidget: (value, meta) {
+                                getTitlesWidget: (value, _) {
                                   final index = value.toInt();
                                   if (index >= 0 && index < days.length) {
                                     return Text(
@@ -103,7 +96,7 @@ class HomeView extends StatelessWidget {
                                       style: const TextStyle(fontSize: 10, color: Color(0xFF1A1A3F)),
                                     );
                                   }
-                                  return const Text('');
+                                  return const SizedBox.shrink();
                                 },
                               ),
                             ),
@@ -112,13 +105,13 @@ class HomeView extends StatelessWidget {
                                 showTitles: true,
                                 reservedSize: 30,
                                 getTitlesWidget: (value, _) => Text(
-                                  value.toString(),
+                                  value.toStringAsFixed(0),
                                   style: const TextStyle(fontSize: 10),
                                 ),
                               ),
                             ),
-                            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                           ),
                           gridData: FlGridData(show: true),
                           borderData: FlBorderData(show: false),
@@ -129,16 +122,14 @@ class HomeView extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // ✅ TOMBOL "Mulai Lari" SAJA
+                  // Tombol Mulai Lari
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1A1A3F),
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       icon: const Icon(Icons.directions_run, color: Color(0xFF72DEC2)),
                       label: const Text(
@@ -150,10 +141,8 @@ class HomeView extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 28),
-                  const Text(
-                    "💡 Tips Hari Ini:",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A3F)),
-                  ),
+                  const Text("💡 Tips Hari Ini:",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF1A1A3F))),
                   const SizedBox(height: 6),
                   Container(
                     width: double.infinity,
@@ -168,19 +157,16 @@ class HomeView extends StatelessWidget {
                       style: TextStyle(fontStyle: FontStyle.italic, fontSize: 14, color: Colors.black87),
                     ),
                   ),
+
                   const SizedBox(height: 28),
-                  const Text(
-                    "📰 Artikel Terkini",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F)),
-                  ),
+                  const Text("📰 Artikel Terkini",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F))),
                   const SizedBox(height: 10),
+
                   Obx(() {
                     final articles = controller.articles;
                     if (articles.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text("Tidak ada artikel tersedia."),
-                      );
+                      return const Text("Tidak ada artikel tersedia.");
                     }
 
                     return ListView.builder(
@@ -224,6 +210,7 @@ class HomeView extends StatelessWidget {
                       },
                     );
                   }),
+
                   const SizedBox(height: 20),
                 ],
               ),
@@ -237,22 +224,9 @@ class HomeView extends StatelessWidget {
         selectedItemColor: const Color(0xFF1A1A3F),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          switch (index) {
-            case 0:
-              Get.offAllNamed('/home');
-              break;
-            case 1:
-              Get.offAllNamed('/gerakan');
-              break;
-            case 2:
-              Get.offAllNamed('/history');
-              break;
-            case 3:
-              Get.offAllNamed('/visualisasi'); // atau /info jika kamu ubah rutenya
-              break;
-            case 4:
-              Get.offAllNamed('/profile');
-              break;
+          final routes = ['/home', '/gerakan', '/history', '/visualisasi', '/profile'];
+          if (index >= 0 && index < routes.length) {
+            Get.offAllNamed(routes[index]);
           }
         },
         items: const [
@@ -272,17 +246,17 @@ class HomeView extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A3F)),
-            ),
+            child: Text(title, style: const TextStyle(fontSize: 15, color: Color(0xFF1A1A3F))),
           ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
         ],
       ),
     );
+  }
+
+  String formatDurasi(int detik) {
+    final menit = detik ~/ 60;
+    final sisaDetik = detik % 60;
+    return '${menit.toString().padLeft(2, '0')}:${sisaDetik.toString().padLeft(2, '0')} menit';
   }
 }
