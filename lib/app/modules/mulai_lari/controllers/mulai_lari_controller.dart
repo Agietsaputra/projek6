@@ -14,6 +14,8 @@ class MulaiLariController extends GetxController {
   RxDouble heading = 0.0.obs;
 
   Rx<LatLng?> currentLocation = Rx<LatLng?>(null);
+  RxBool isLoading = true.obs;
+  RxString errorMessage = ''.obs;
 
   StreamSubscription<Position>? positionStream;
   Timer? _timer;
@@ -21,7 +23,6 @@ class MulaiLariController extends GetxController {
   final distance = const Distance();
   late MapController mapController;
 
-  /// ✅ Fungsi waktu terformat HH:mm:ss
   String get formattedElapsedTime {
     final durasi = Duration(seconds: elapsedSeconds.value);
     String duaDigit(int n) => n.toString().padLeft(2, '0');
@@ -39,6 +40,8 @@ class MulaiLariController extends GetxController {
   }
 
   Future<void> getCurrentLocation() async {
+    isLoading.value = true;
+    errorMessage.value = '';
     try {
       await _checkPermission();
       final position = await Geolocator.getCurrentPosition(
@@ -46,7 +49,9 @@ class MulaiLariController extends GetxController {
       );
       currentLocation.value = LatLng(position.latitude, position.longitude);
     } catch (e) {
-      Get.snackbar("Lokasi Gagal", "$e");
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
     }
   }
 

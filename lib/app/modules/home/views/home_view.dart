@@ -50,7 +50,6 @@ class HomeView extends StatelessWidget {
                   summaryRow("Total Minggu Ini", "🏃‍♂️ ${totalKm.toStringAsFixed(2)} KM"),
                   const SizedBox(height: 24),
 
-                  // Grafik
                   const Text("📈 Grafik Mingguan",
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A3F))),
                   const SizedBox(height: 12),
@@ -122,7 +121,6 @@ class HomeView extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Tombol Mulai Lari
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -254,9 +252,13 @@ class HomeView extends StatelessWidget {
     );
   }
 
+  /// Format fleksibel: tampilkan 'X menit Y detik'
   String formatDurasi(int detik) {
     final menit = detik ~/ 60;
     final sisaDetik = detik % 60;
-    return '${menit.toString().padLeft(2, '0')}:${sisaDetik.toString().padLeft(2, '0')} menit';
+    if (menit > 0) {
+      return '$menit menit ${sisaDetik.toString().padLeft(2, '0')} detik';
+    }
+    return '$sisaDetik detik';
   }
 }

@@ -19,9 +19,35 @@ class MulaiLariView extends StatelessWidget {
         centerTitle: true,
       ),
       body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.errorMessage.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error, color: Colors.red, size: 40),
+                const SizedBox(height: 8),
+                Text(
+                  controller.errorMessage.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => controller.getCurrentLocation(),
+                  child: const Text("Coba Ambil Lokasi Lagi"),
+                ),
+              ],
+            ),
+          );
+        }
+
         final lokasi = controller.currentLocation.value;
         if (lokasi == null) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: Text("Menunggu lokasi..."));
         }
 
         return Stack(
@@ -33,90 +59,85 @@ class MulaiLariView extends StatelessWidget {
                 initialZoom: 16.0,
               ),
               children: [
-                // ✅ MapTiler Tile
                 TileLayer(
                   urlTemplate:
                       "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=vFDGKJX4ek3RBLCsaljd",
                   userAgentPackageName: 'com.example.apa',
                 ),
 
-                // ✅ Real-time Polyline
+                /// Polyline untuk rute
                 Obx(() => PolylineLayer(
                       polylines: [
                         Polyline(
-                          points: controller.routePoints,
+                          points: controller.routePoints.toList(),
                           strokeWidth: 4.0,
                           color: Colors.blueAccent,
                         ),
                       ],
                     )),
 
-                // ✅ Marker posisi user
+                /// Marker posisi pengguna
                 Obx(() => MarkerLayer(
                       markers: [
-                        Marker(
-                          point: controller.currentLocation.value!,
-                          width: 40,
-                          height: 40,
-                          child: const Icon(
-                            Icons.person_pin_circle,
-                            color: Colors.red,
-                            size: 40,
+                        if (controller.currentLocation.value != null)
+                          Marker(
+                            point: controller.currentLocation.value!,
+                            width: 40,
+                            height: 40,
+                            child: const Icon(
+                              Icons.person_pin_circle,
+                              color: Colors.red,
+                              size: 40,
+                            ),
                           ),
-                        )
                       ],
                     )),
               ],
             ),
 
-            // ✅ Durasi dan Jarak
+            /// Durasi & jarak
             Positioned(
               top: 16,
               left: 16,
               right: 16,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Obx(() => Text(
+              child: Obx(() => Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
                           "⏱️ ${_formatWaktu(controller.elapsedSeconds.value)}",
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
-                        )),
-                    Obx(() => Text(
+                        ),
+                        Text(
                           "📏 ${(controller.totalDistance.value / 1000).toStringAsFixed(2)} KM",
                           style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
-                        )),
-                  ],
-                ),
-              ),
+                        ),
+                      ],
+                    ),
+                  )),
             ),
 
-            // ✅ Tombol Pusatkan ke Lokasi
+            /// Tombol pusat lokasi
             Positioned(
               top: 100,
               right: 16,
               child: FloatingActionButton(
                 heroTag: "center_button",
                 backgroundColor: Colors.white,
-                onPressed: () {
-                  final current = controller.currentLocation.value;
-                  if (current != null) {
-                    controller.mapController.move(current, 16.0);
-                  }
-                },
+                onPressed: controller.centerToCurrentLocation,
                 child: const Icon(Icons.my_location, color: Colors.black),
               ),
             ),
 
-            // ✅ Tombol Mulai / Selesai
+            /// Tombol Mulai/Selesai
             Positioned(
               bottom: 30,
               left: 20,
@@ -135,7 +156,8 @@ class MulaiLariView extends StatelessWidget {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () {
                       if (controller.isRunning.value) {
@@ -152,7 +174,6 @@ class MulaiLariView extends StatelessWidget {
     );
   }
 
-  /// ✅ Format HH:mm:ss dari total detik
   String _formatWaktu(int detik) {
     final durasi = Duration(seconds: detik);
     String duaDigit(int n) => n.toString().padLeft(2, '0');
