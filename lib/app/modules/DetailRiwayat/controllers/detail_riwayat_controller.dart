@@ -3,20 +3,24 @@ import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 
 class DetailRiwayatController extends GetxController {
-  late int durasi;
-  late double jarak;
-  late List<LatLng> rute;
-  late DateTime tanggal;
+  late int durasi;               // 🕒 Total durasi dalam detik
+  late double jarak;             // 📏 Total jarak dalam kilometer
+  late List<LatLng> rute;        // 🗺️ Daftar titik rute GPS
+  late DateTime tanggal;         // 📅 Tanggal aktivitas
 
   @override
   void onInit() {
     super.onInit();
+
     final args = Get.arguments;
 
     durasi = args['durasi'] ?? 0;
     jarak = args['jarak'] ?? 0.0;
+
+    // 🗓️ Parse tanggal, fallback ke waktu saat ini jika null/invalid
     tanggal = DateTime.tryParse('${args['tanggal']}') ?? DateTime.now();
 
+    // 🧭 Parse dan konversi rute GPS
     final rawRute = args['rute'];
     if (rawRute is List) {
       rute = rawRute.map((e) {
@@ -26,7 +30,7 @@ class DetailRiwayatController extends GetxController {
           final lng = e['longitude'] ?? e['lng'] ?? 0.0;
           return LatLng(lat, lng);
         }
-        return LatLng(0, 0);
+        return LatLng(0, 0); // Fallback jika elemen aneh
       }).toList();
     } else {
       rute = [];
@@ -34,7 +38,7 @@ class DetailRiwayatController extends GetxController {
     }
   }
 
-  /// Format waktu HH:mm:ss
+  /// 🕒 Format durasi ke HH:mm:ss
   String get formattedDuration {
     final duration = Duration(seconds: durasi);
     String duaDigit(int n) => n.toString().padLeft(2, '0');
@@ -44,10 +48,10 @@ class DetailRiwayatController extends GetxController {
     return '$jam:$menit:$detik';
   }
 
-  /// Format jarak
+  /// 📏 Format jarak ke 2 digit desimal
   String get formattedDistance => '${jarak.toStringAsFixed(2)} km';
 
-  /// Format tanggal lokal
+  /// 📅 Format tanggal ke gaya lokal (Bahasa Indonesia)
   String get formattedTanggal =>
       DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(tanggal);
 }
