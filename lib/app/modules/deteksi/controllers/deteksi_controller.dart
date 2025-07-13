@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,24 +29,34 @@ class DeteksiController extends GetxController {
     'Butt_kick_model.tflite': 'Butt Kick',
   };
 
+  final holdDuration = 5;
+  int holdingSeconds = 0;
+  Timer? holdingTimer;
+
   @override
   void onInit() {
     super.onInit();
-    loadAllModels().then((_) async {
-      final exerciseName = Get.arguments as String? ?? '';
-      for (final entry in modelMap.entries) {
-        final normalizedName = entry.value.toLowerCase().replaceAll(' ', '');
-        final inputName = exerciseName.toLowerCase().replaceAll(' ', '');
-        if (normalizedName == inputName) {
-          activeModelFile.value = entry.key;
-          await startCamera();
-          break;
-        }
+    final exerciseName = Get.arguments as String? ?? '';
+
+    for (final entry in modelMap.entries) {
+      final modelNameNormalized = entry.value.toLowerCase().replaceAll(' ', '');
+      final inputName = exerciseName.toLowerCase().replaceAll(' ', '');
+      if (modelNameNormalized == inputName) {
+        activeModelFile.value = entry.key;
+        loadSingleModel(entry.key).then((_) {
+          if (interpreters[entry.key] != null) {
+            startCamera();
+          } else {
+            debugPrint("❌ Interpreter null setelah load model");
+          }
+        });
+        break;
       }
-      if (activeModelFile.value.isEmpty) {
-        debugPrint("❌ Tidak ditemukan model untuk '$exerciseName'");
-      }
-    });
+    }
+
+    if (activeModelFile.value.isEmpty) {
+      debugPrint("❌ Tidak ditemukan model untuk '$exerciseName'");
+    }
   }
 
   @override
@@ -55,26 +66,22 @@ class DeteksiController extends GetxController {
       interpreter.close();
     }
     poseDetector.close();
+    holdingTimer?.cancel();
     super.onClose();
   }
 
-  Future<void> loadAllModels() async {
-    for (var modelFile in modelMap.keys) {
-      try {
-        final interpreter = await Interpreter.fromAsset('assets/models/$modelFile');
-        interpreters[modelFile] = interpreter;
-        debugPrint('✅ Loaded model: $modelFile');
-      } catch (e) {
-        debugPrint('❌ Failed to load model $modelFile: $e');
-      }
+  Future<void> loadSingleModel(String modelFile) async {
+    try {
+      final interpreter = await Interpreter.fromAsset('assets/models/$modelFile');
+      interpreters[modelFile] = interpreter;
+      debugPrint('✅ Loaded model: $modelFile');
+    } catch (e) {
+      debugPrint('❌ Failed to load model $modelFile: $e');
     }
   }
 
   Future<void> startCamera() async {
-    if (activeModelFile.value == '') {
-      debugPrint('❗ Pilih model dulu sebelum mulai kamera');
-      return;
-    }
+    if (activeModelFile.value.isEmpty) return;
     cameras = await availableCameras();
     await initializeCamera(selectedCameraIndex);
   }
@@ -85,22 +92,21 @@ class DeteksiController extends GetxController {
     cameraController = null;
     isCameraInitialized.value = false;
     predictedLabel.value = 'unknown';
+    cancelHoldTimer();
   }
 
   Future<void> switchCamera() async {
-    if (cameras.isEmpty) {
-      cameras = await availableCameras();
-    }
+    if (cameras.isEmpty) cameras = await availableCameras();
     selectedCameraIndex = (selectedCameraIndex + 1) % cameras.length;
     await stopCamera();
     await initializeCamera(selectedCameraIndex);
   }
 
-  Future<void> initializeCamera(int cameraIndex) async {
+  Future<void> initializeCamera(int index) async {
     try {
-      final selectedCamera = cameras[cameraIndex];
+      final camera = cameras[index];
       cameraController = CameraController(
-        selectedCamera,
+        camera,
         ResolutionPreset.medium,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.nv21,
@@ -109,89 +115,75 @@ class DeteksiController extends GetxController {
       await cameraController!.startImageStream(processCameraImage);
       isCameraInitialized.value = true;
     } catch (e) {
-      debugPrint('Camera init error: $e');
+      debugPrint('❌ Camera init error: $e');
     }
   }
 
+  List<List<List<List<double>>>> reshape1DTo4D(List<double> flat, int d1, int d2, int d3, int d4) {
+    if (flat.length != d1 * d2 * d3 * d4) {
+      throw ArgumentError("❌ Ukuran tidak cocok: ${flat.length} != ${d1 * d2 * d3 * d4}");
+    }
+    var index = 0;
+    return List.generate(d1, (_) =>
+        List.generate(d2, (_) =>
+            List.generate(d3, (_) =>
+                List.generate(d4, (_) => flat[index++])
+            )
+        )
+    );
+  }
+
   void processCameraImage(CameraImage image) async {
-    if (isDetecting || activeModelFile.value.isEmpty) return;
+    if (isDetecting || activeModelFile.value.isEmpty || cameraController == null) return;
     isDetecting = true;
 
     try {
-      final allBytes = image.planes.fold<List<int>>([], (acc, plane) {
-        acc.addAll(plane.bytes);
-        return acc;
-      });
-      final bytes = Uint8List.fromList(allBytes);
-
-      final rotation = InputImageRotationValue.fromRawValue(
-            cameraController!.description.sensorOrientation,
-          ) ??
-          InputImageRotation.rotation0deg;
-
-      final format = InputImageFormatValue.fromRawValue(image.format.raw);
-      if (format == null) {
-        debugPrint("Unsupported format: ${image.format.raw}");
-        isDetecting = false;
-        return;
-      }
+      final bytes = image.planes.expand((plane) => plane.bytes).toList();
 
       final inputImage = InputImage.fromBytes(
-        bytes: bytes,
+        bytes: Uint8List.fromList(bytes),
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
-          rotation: rotation,
-          format: format,
+          rotation: InputImageRotationValue.fromRawValue(
+              cameraController!.description.sensorOrientation) ??
+              InputImageRotation.rotation0deg,
+          format: InputImageFormatValue.fromRawValue(image.format.raw)!,
           bytesPerRow: image.planes[0].bytesPerRow,
         ),
       );
 
       final poses = await poseDetector.processImage(inputImage);
+
       if (poses.isNotEmpty) {
         final keypoints = <double>[];
-        for (var lmType in PoseLandmarkType.values) {
-          final lm = poses.first.landmarks[lmType];
-          keypoints.addAll(lm != null ? [lm.x, lm.y, lm.z] : [0.0, 0.0, 0.0]);
+        for (var type in PoseLandmarkType.values) {
+          final landmark = poses.first.landmarks[type];
+          keypoints.addAll(landmark != null ? [landmark.x, landmark.y] : [0.0, 0.0]);
         }
 
-        if (keypoints.length == 99) {
+        if (keypoints.length == 66) {
           final interpreter = interpreters[activeModelFile.value];
           if (interpreter == null) {
-            predictedLabel.value = 'unknown';
-            isDetecting = false;
+            debugPrint("❌ Interpreter null sebelum run");
             return;
           }
 
-          final inputShape = interpreter.getInputTensor(0).shape;
-          dynamic input;
-          if (inputShape.length == 4) {
-            input = List.generate(
-              inputShape[1],
-              (_) => List.generate(
-                inputShape[2],
-                (_) => List.filled(inputShape[3], 0.0),
-              ),
-            );
-            input = [input];
-          } else if (inputShape.length == 2) {
-            input = [keypoints];
-          } else {
-            predictedLabel.value = 'unknown';
-            isDetecting = false;
-            return;
-          }
-
+          final input = reshape1DTo4D(keypoints, 1, 11, 6, 1);
           final output = List.generate(1, (_) => List.filled(1, 0.0));
-          interpreter.run(input, output);
 
+          interpreter.run(input, output);
           final confidence = output[0][0];
+          final label = modelMap[activeModelFile.value]!;
+
           if (confidence > 0.8) {
-            predictedLabel.value = modelMap[activeModelFile.value]!;
-            debugPrint("🎯 Detected: ${predictedLabel.value} (${(confidence * 100).toStringAsFixed(1)}%)");
+            predictedLabel.value = '$label (${holdingSeconds}s)';
+            startHoldTimer(label);
           } else {
             predictedLabel.value = 'unknown';
-            debugPrint("🤏 Low confidence: ${(confidence * 100).toStringAsFixed(1)}%");
+            cancelHoldTimer();
           }
+        } else {
+          debugPrint("⚠️ Jumlah keypoint tidak sesuai: ${keypoints.length}");
         }
       }
     } catch (e) {
@@ -199,5 +191,26 @@ class DeteksiController extends GetxController {
     } finally {
       isDetecting = false;
     }
+  }
+
+  void startHoldTimer(String label) {
+    holdingTimer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+      holdingSeconds++;
+      predictedLabel.value = '$label (${holdingSeconds}s)';
+
+      if (holdingSeconds >= holdDuration) {
+        predictedLabel.value = label;
+        timer.cancel();
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.back(result: true);
+        });
+      }
+    });
+  }
+
+  void cancelHoldTimer() {
+    holdingTimer?.cancel();
+    holdingTimer = null;
+    holdingSeconds = 0;
   }
 }

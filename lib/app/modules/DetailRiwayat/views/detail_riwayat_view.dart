@@ -22,7 +22,7 @@ class DetailRiwayatView extends GetView<DetailRiwayatController> {
         title: const Text(
           'Detail Riwayat',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             color: Color(0xFF72DEC2),
           ),
@@ -30,10 +30,7 @@ class DetailRiwayatView extends GetView<DetailRiwayatController> {
         centerTitle: true,
         backgroundColor: const Color(0xFF1A1A3F),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.offNamed('/history'),
-        ),
+        automaticallyImplyLeading: false, // <- Menghapus ikon kembali
       ),
       body: Column(
         children: [
@@ -139,7 +136,7 @@ class DetailRiwayatView extends GetView<DetailRiwayatController> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () => Get.offNamed('/history'),
-                      icon: const Icon(Icons.history),
+                      icon: const Icon(Icons.history, color: Color(0xFF72DEC2)),
                       label: const Text(
                         'Kembali ke Riwayat',
                         style: TextStyle(

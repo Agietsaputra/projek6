@@ -31,14 +31,14 @@ class DeteksiView extends GetView<DeteksiController> {
 
           return Column(
             children: [
-              // 🔲 Kamera dalam rasio portrait (3:4)
+              // Kamera
               AspectRatio(
                 aspectRatio: 3 / 4,
                 child: CameraPreview(controller.cameraController!),
               ),
               const SizedBox(height: 20),
 
-              // 🧠 Prediksi Gerakan
+              // Prediksi Gerakan
               Text(
                 'Gerakan Terdeteksi:',
                 style: TextStyle(fontSize: 18, color: Colors.grey[800]),
@@ -55,7 +55,7 @@ class DeteksiView extends GetView<DeteksiController> {
 
               const Spacer(),
 
-              // 🔘 Tombol Aksi
+              // Tombol
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -81,23 +81,9 @@ class DeteksiView extends GetView<DeteksiController> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: () {
-                      final label = controller.predictedLabel.value;
-                      final target =
-                          controller.modelMap[controller.activeModelFile.value];
-                      if (label == target) {
-                        Get.back(result: true);
-                      } else {
-                        Get.snackbar(
-                          'Deteksi Gagal',
-                          'Pastikan kamu melakukan gerakan $target dengan benar.',
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
-                      }
-                    },
+                    onPressed: () => Get.back(result: true),
                     icon: const Icon(Icons.check),
-                    label: const Text('Selesai'),
+                    label: const Text('Kembali'),
                   ),
                 ],
               ),

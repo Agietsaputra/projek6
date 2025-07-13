@@ -12,11 +12,23 @@ class MulaiLariView extends StatelessWidget {
     final controller = Get.find<MulaiLariController>();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A3F),
-        foregroundColor: Colors.white,
-        title: const Text("Mulai Lari"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF72DEC2)),
+          onPressed: () => Get.back(),
+        ),
+        title: const Text(
+          'Mulai Lari',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF72DEC2),
+          ),
+        ),
         centerTitle: true,
+        elevation: 0,
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -64,8 +76,6 @@ class MulaiLariView extends StatelessWidget {
                       "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=vFDGKJX4ek3RBLCsaljd",
                   userAgentPackageName: 'com.example.apa',
                 ),
-
-                /// Polyline untuk rute
                 Obx(() => PolylineLayer(
                       polylines: [
                         Polyline(
@@ -75,8 +85,6 @@ class MulaiLariView extends StatelessWidget {
                         ),
                       ],
                     )),
-
-                /// Marker posisi pengguna
                 Obx(() => MarkerLayer(
                       markers: [
                         if (controller.currentLocation.value != null)
@@ -95,7 +103,7 @@ class MulaiLariView extends StatelessWidget {
               ],
             ),
 
-            /// Durasi & jarak
+            // Durasi & Jarak
             Positioned(
               top: 16,
               left: 16,
@@ -125,7 +133,7 @@ class MulaiLariView extends StatelessWidget {
                   )),
             ),
 
-            /// Tombol pusat lokasi
+            // Tombol center lokasi
             Positioned(
               top: 100,
               right: 16,
@@ -137,35 +145,43 @@ class MulaiLariView extends StatelessWidget {
               ),
             ),
 
-            /// Tombol Mulai/Selesai
+            // Tombol Mulai/Selesai Lari
             Positioned(
               bottom: 30,
-              left: 20,
-              right: 20,
-              child: Obx(() => ElevatedButton.icon(
-                    icon: Icon(controller.isRunning.value
-                        ? Icons.stop
-                        : Icons.play_arrow),
-                    label: Text(controller.isRunning.value
-                        ? "Selesai Lari"
-                        : "Mulai Lari"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: controller.isRunning.value
-                          ? Colors.red
-                          : const Color(0xFF1A1A3F),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              left: 0,
+              right: 0,
+              child: Obx(() => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: controller.isRunning.value
+                            ? Colors.red
+                            : const Color(0xFF1A1A3F),
+                        minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        if (controller.isRunning.value) {
+                          controller.stopRun();
+                        } else {
+                          controller.startRun();
+                        }
+                      },
+                      child: Text(
+                        controller.isRunning.value
+                            ? "Selesai Lari"
+                            : "Mulai Lari",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: controller.isRunning.value
+                              ? Colors.white
+                              : const Color(0xFF72DEC2),
+                        ),
                       ),
                     ),
-                    onPressed: () {
-                      if (controller.isRunning.value) {
-                        controller.stopRun();
-                      } else {
-                        controller.startRun();
-                      }
-                    },
                   )),
             ),
           ],

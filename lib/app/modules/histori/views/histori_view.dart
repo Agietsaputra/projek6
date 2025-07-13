@@ -36,11 +36,19 @@ class HistoriView extends GetView<HistoriController> {
       backgroundColor: const Color(0xFFE1F6F4),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A3F),
-        foregroundColor: Colors.white,
-        title: const Text('Riwayat Lari'),
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF72DEC2)),
           onPressed: () => Get.offAllNamed('/home'),
+        ),
+        centerTitle: true,
+        title: const Text(
+          'Riwayat Lari',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF72DEC2),
+          ),
         ),
       ),
       body: Obx(() {
