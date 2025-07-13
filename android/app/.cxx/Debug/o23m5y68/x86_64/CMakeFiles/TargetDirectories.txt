@@ -1,0 +1,2 @@
+/home/yaseru/Documents/Semester 6/Game Development/projek6/android/app/.cxx/Debug/o23m5y68/x86_64/CMakeFiles/edit_cache.dir
+/home/yaseru/Documents/Semester 6/Game Development/projek6/android/app/.cxx/Debug/o23m5y68/x86_64/CMakeFiles/rebuild_cache.dir

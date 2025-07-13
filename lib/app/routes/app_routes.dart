@@ -18,4 +18,5 @@ abstract class Routes {
   static const MULAI_LARI = '/mulai-lari';
   static const RINGKASAN_LARI = '/ringkasan-lari';
   static const DETAIL_RIWAYAT = '/detail-riwayat';
+  static const ARTICLE_VIEW = '/article-view';
 }

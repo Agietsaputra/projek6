@@ -1,8 +1,10 @@
+import 'package:apa/app/routes/app_pages.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:apa/app/modules/home/controllers/home_controller.dart';
+import 'package:url_launcher/url_launcher.dart'; // <-- PENTING: Impor package ini
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -178,7 +180,7 @@ class HomeView extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
                           ),
                           child: ListTile(
                             leading: const Icon(Icons.article_outlined, color: Color(0xFF1A1A3F)),
@@ -188,20 +190,21 @@ class HomeView extends StatelessWidget {
                               style: const TextStyle(color: Colors.black54),
                             ),
                             trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
-                            onTap: () {
-                              Get.defaultDialog(
-                                title: article.judul,
-                                content: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(article.isi),
-                                ),
-                                radius: 12,
-                                titleStyle: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1A1A3F),
-                                ),
-                              );
+                            onTap: () async {
+                              final Uri url = Uri.parse(article.link);
+
+                              try {
+                                await launchUrl(
+                                  url,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } catch (e) {
+                                Get.snackbar(
+                                  "Gagal Membuka",
+                                  "Tidak dapat membuka tautan: ${article.link}",
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
+                              }
                             },
                           ),
                         );

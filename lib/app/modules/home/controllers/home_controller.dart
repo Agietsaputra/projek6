@@ -170,22 +170,64 @@ class HomeController extends GetxController {
   void loadManualArticles() {
     final List<Map<String, String>> rawData = [
       {
-        "judul": "Jelang Puncak Arus Balik...",
-        "tanggal": "Sabtu, 13 Apr 2024 11:00 WIB",
-        "link": "https://health.detik.com/kebugaran/d-7290517/...",
-        "isi": "Seperti halnya arus mudik..."
+        "judul": "Mengenal Stretching, Jenis dan Manfaatnya untuk Tubuh",
+        "tanggal": "Kamis, 26 Sep 2024 14:00 WIB",
+        "link": "https://www.halodoc.com/artikel/mengenal-stretching-jenis-dan-manfaatnya-untuk-tubuh",
+        "isi": "Stretching adalah aktivitas yang meningkatkan fleksibilitas, rentang gerak, dan performa fisik, serta mencegah cedera. Dengan memahami jenis-jenis dan manfaatnya, kamu dapat memulai stretching agar memperoleh kesehatan yang lebih baik."
       },
       {
-        "judul": "Pegal-pegal Kelamaan Duduk...",
-        "tanggal": "Minggu, 07 Apr 2024 06:57 WIB",
-        "link": "https://health.detik.com/berita-detikhealth/d-7282874/...",
-        "isi": "Salah satu risiko perjalanan..."
+        "judul": "Stretching: Jenis dan Manfaatnya bagi Tubuh",
+        "tanggal": "Senin, 11 Nov 2024 15:00 WIB",
+        "link": "https://www.alodokter.com/stretching-jenis-dan-manfaatnya-bagi-tubuh",
+        "isi": "Stretching atau peregangan otot adalah aktivitas yang dilakukan untuk menjaga otot-otot tubuh tetap lentur, kuat dan, sehat. Terdapat beragam jenis stretching yang bermanfaat bagi kesehatan dan kebugaran tubuh."
       },
       {
-        "judul": "Tips Jaga Stamina dan Kebugaran...",
-        "tanggal": "Jumat, 21 Mar 2025 11:15 WIB",
-        "link": "https://www.detik.com/sumut/berita/d-7834353/...",
-        "isi": "Itikaf merupakan salah satu kegiatan..."
+        "judul": "Ketahui Apa itu Stretching dan Manfaatnya Untuk Kesehatan!",
+        "tanggal": "Senin, 14 Okt 2024 14:00 WIB",
+        "link": "https://enesis.com/id/artikel/apa-itu-stretching/",
+        "isi": "Salah satu cara untuk menjaga kesehatan tubuh adalah dengan melakukan peregangan atau stretching. Apa itu stretching? Stretching adalah latihan ringan yang sangat bermanfaat untuk meningkatkan fleksibilitas, mengurangi nyeri otot, dan meningkatkan sirkulasi darah."
+      },
+      {
+        "judul": "5 Manfaat Stretching bagi Tubuh dan Cara Melakukan Gerakannya",
+        "tanggal": "Kamis, 07 Jul 2022 14:00 WIB",
+        "link": "https://www.alodokter.com/terkesan-sederhana-ini-manfaat-stretching-bagi-tubuh",
+        "isi": "Biasanya, stretching melibatkan otot bahu, dada, leher, punggung, pinggul, kaki, dan pergelangan kaki. Gerakan stretching juga baik dilakukan oleh ibu hamil yang rentan mengalami nyeri punggung."
+      },
+      {
+        "judul": "Manfaat Peregangan Sebelum, Selama, dan Setelah Olahraga",
+        "tanggal": "Jumat, 12 Feb 2021 15:00 WIB",
+        "link": "https://www.cnnindonesia.com/gaya-hidup/20210201120357-255-600797/manfaat-peregangan-sebelum-selama-dan-setelah-olahraga",
+        "isi": "Pemanasan jadi menu mutlak sebelum berolahraga, termasuk peregangan. Peregangan membuat olahraga yang dilakukan aman dari risiko cedera. Sebagian orang menyangka peregangan hanya dilakukan sebelum berolahraga. Padahal, setelah dan selama olahraga pun, peregangan layak dilakukan dan membawa manfaat tersendiri."
+      },
+      {
+        "judul": "7 Manfaat Peregangan untuk Kesehatan Otot dan Sendi",
+        "tanggal": "Senin, 26 Agu 2024 14:00 WIB",
+        "link": "https://www.ciputramedicalcenter.com/manfaat-peregangan/",
+        "isi": "Tujuan gerakan peregangan adalah untuk membuat otot lebih lentur. Seiring bertambahnya usia, tubuh cenderung mudah kaku dan terasa pegal. Kondisi ini bisa semakin parah apabila Anda jarang berolahraga atau melakukan aktivitas fisik."
+      },
+      {
+        "judul": "5 Waktu yang Tepat untuk Melakukan Peregangan Setiap Harinya",
+        "tanggal": "Kamis, 07 Okt 2021 14:00 WIB",
+        "link": "https://www.idntimes.com/health/fitness/waktu-yang-tepat-untuk-melakukan-peregangan-c1c2-01-ttmm6-tfthw1",
+        "isi": "Banyak dari kita yang menggeliatkan tubuh sesaat setelah bangun tidur. Kebiasaan ini tanpa disadari termasuk gerakan peregangan yang bisa melawan kekakuan tubuh setelah terlelap semalaman."
+      },
+      {
+        "judul": "Apa Itu Stretching dan 7 Jenis Latihannya",
+        "tanggal": "Data tidak tersedia",
+        "link": "https://fithub.id/blog/apa-itu-stretching/",
+        "isi": "Stretching adalah hal yang harus dilakukan secara rutin setiap hari menurut Harvard Health Publishing. Alasannya, stretching atau peregangan membuat otot tetap fleksibel, kuat, dan sehat."
+      },
+      {
+        "judul": "Peregangan Ternyata Bermanfaat Bagi Tubuh Lho!",
+        "tanggal": "Minggu, 17 Nov 2019 15:00 WIB",
+        "link": "https://ayosehat.kemkes.go.id/peregangan-ternyata-bermanfaat-bagi-tubuh-lho",
+        "isi": "Salah satu manfaat melakukan peregangan adalah untuk menghindari terjadinya cedera. Hal ini dikarenakan peregangan dapat meningkatkan vitalitas yang membuat tubuh menjadi mudah dengan gerakan yang tiba-tiba."
+      },
+      {
+        "judul": "Bagaimana Cara Melakukan Peregangan sebelum Berolahraga?",
+        "tanggal": "Jumat, 27 Agu 2021 14:00 WIB",
+        "link": "https://www.halodoc.com/artikel/bagaimana-cara-melakukan-peregangan-sebelum-berolahraga",
+        "isi": "Sebab, otot merespon lebih baik terhadap tekanan yang diberikan tubuh saat melakukan pemanasan. Maka, lakukanlah pemanasan ringan seperti berjalan lima sampai 10 menit. Hal ini bertujuan agar darah mengalir ke seluruh tubuh dengan lancar."
       },
     ];
 
