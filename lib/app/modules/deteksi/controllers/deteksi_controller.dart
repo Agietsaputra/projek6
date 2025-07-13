@@ -1,12 +1,16 @@
 import 'dart:typed_data';
 import 'dart:async';
+import 'package:apa/app/modules/gerakan/controllers/gerakan_controller.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
+
 class DeteksiController extends GetxController {
+  final gerakanController = Get.find<GerakanController>(); // ⬅️ Terhubung otomatis
+
   Map<String, Interpreter> interpreters = {};
   CameraController? cameraController;
   List<CameraDescription> cameras = [];
@@ -145,8 +149,7 @@ class DeteksiController extends GetxController {
         metadata: InputImageMetadata(
           size: Size(image.width.toDouble(), image.height.toDouble()),
           rotation: InputImageRotationValue.fromRawValue(
-              cameraController!.description.sensorOrientation) ??
-              InputImageRotation.rotation0deg,
+              cameraController!.description.sensorOrientation) ?? InputImageRotation.rotation0deg,
           format: InputImageFormatValue.fromRawValue(image.format.raw)!,
           bytesPerRow: image.planes[0].bytesPerRow,
         ),
@@ -163,10 +166,7 @@ class DeteksiController extends GetxController {
 
         if (keypoints.length == 66) {
           final interpreter = interpreters[activeModelFile.value];
-          if (interpreter == null) {
-            debugPrint("❌ Interpreter null sebelum run");
-            return;
-          }
+          if (interpreter == null) return;
 
           final input = reshape1DTo4D(keypoints, 1, 11, 6, 1);
           final output = List.generate(1, (_) => List.filled(1, 0.0));
@@ -178,6 +178,9 @@ class DeteksiController extends GetxController {
           if (confidence > 0.8) {
             predictedLabel.value = '$label (${holdingSeconds}s)';
             startHoldTimer(label);
+
+            // ✅ Update otomatis gerakan di controller
+            gerakanController.updateFromPrediction(label);
           } else {
             predictedLabel.value = 'unknown';
             cancelHoldTimer();

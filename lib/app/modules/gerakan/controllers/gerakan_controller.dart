@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 
 class Exercise {
   final String name;
-  final int duration; // durasi target dalam detik
+  final int duration; // dalam detik
   bool isCompleted;
   int secondsHeld;
 
@@ -27,9 +28,17 @@ class GerakanController extends GetxController {
   Timer? _timer;
   String? _currentExerciseName;
 
+  /// Dipanggil dari DeteksiController ketika gerakan dikenali
+  void updateFromPrediction(String name) {
+    final index = exercises.indexWhere((e) => e.name == name);
+    if (index == -1 || exercises[index].isCompleted) return;
+
+    startCounting(name);
+  }
+
   void startCounting(String name) {
-    if (_currentExerciseName == name) return; // skip jika sudah counting
-    stopCounting(); // hentikan timer lain
+    if (_currentExerciseName == name) return;
+    stopCounting();
 
     _currentExerciseName = name;
 
@@ -41,7 +50,12 @@ class GerakanController extends GetxController {
         if (exercises[index].secondsHeld >= exercises[index].duration) {
           exercises[index].isCompleted = true;
           stopCounting();
-          print('✅ ${name} selesai');
+          print('✅ $name selesai');
+
+          // Jika semua selesai, tampilkan notifikasi
+          if (allCompleted) {
+            Future.delayed(const Duration(milliseconds: 300), cekSemuaGerakan);
+          }
         }
 
         exercises.refresh();
@@ -52,11 +66,8 @@ class GerakanController extends GetxController {
   }
 
   void stopCounting() {
-    if (_timer != null) {
-      _timer!.cancel();
-      _timer = null;
-      print('🛑 Timer dihentikan');
-    }
+    _timer?.cancel();
+    _timer = null;
     _currentExerciseName = null;
   }
 
@@ -69,7 +80,6 @@ class GerakanController extends GetxController {
     }
   }
 
-  // Untuk debugging manual
   void markCompleted(String name) {
     final index = exercises.indexWhere((e) => e.name == name);
     if (index != -1) {
@@ -77,5 +87,41 @@ class GerakanController extends GetxController {
       exercises.refresh();
       stopCounting();
     }
+  }
+
+  /// True jika semua gerakan sudah selesai
+  bool get allCompleted => exercises.every((e) => e.isCompleted);
+
+  /// 🔔 Cek semua gerakan dan tampilkan notifikasi
+  void cekSemuaGerakan() {
+    if (allCompleted) {
+      Get.snackbar(
+        '🎉 Semua Gerakan Selesai',
+        'Kamu telah menyelesaikan semua pemanasan!',
+        backgroundColor: Colors.green[100],
+        colorText: Colors.black,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+    } else {
+      final belum = exercises.where((e) => !e.isCompleted).map((e) => e.name).join(', ');
+      Get.snackbar(
+        '⏳ Gerakan Belum Selesai',
+        'Masih ada gerakan: $belum',
+        backgroundColor: Colors.orange[100],
+        colorText: Colors.black,
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
+
+  /// 🔁 Reset semua gerakan ke kondisi awal
+  void resetAll() {
+    for (var e in exercises) {
+      e.isCompleted = false;
+      e.secondsHeld = 0;
+    }
+    exercises.refresh();
   }
 }
