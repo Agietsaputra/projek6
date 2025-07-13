@@ -1,4 +1,3 @@
-import 'package:apa/app/modules/ArticleView/views/article_view_view.dart';
 import 'package:apa/app/routes/app_pages.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
