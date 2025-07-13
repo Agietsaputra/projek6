@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-
 import '../modules/DetailRiwayat/bindings/detail_riwayat_binding.dart';
 import '../modules/DetailRiwayat/views/detail_riwayat_view.dart';
 import '../modules/activity/bindings/activity_binding.dart';
